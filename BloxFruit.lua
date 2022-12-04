@@ -7698,6 +7698,24 @@ local MainMiscSection = MiscTab:CreateSection({
 })
 
 MainMiscSection:AddToggle({
+    Name = "Black Screen",
+    Flag = "Black_Screen",
+    Value = _G.Settings.Black_Screen,
+    Callback = function(value)
+        _G.Black_Screen = value
+		_G.Settings.Black_Screen = value
+		saveSettings()
+		if _G.Black_Screen then
+			game:GetService("Players").LocalPlayer.PlayerGui.Main.Blackscreen.Size = UDim2.new(500, 0, 500, 500)
+		else
+			game:GetService("Players").LocalPlayer.PlayerGui.Main.Blackscreen.Size = UDim2.new(1, 0, 500, 500)
+
+
+		end
+    end
+})
+
+MainMiscSection:AddToggle({
     Name = "White Screen",
     Flag = "White_Screen",
     Value = _G.Settings.White_Screen,
@@ -7709,6 +7727,7 @@ MainMiscSection:AddToggle({
 			game:GetService("RunService"):Set3dRenderingEnabled(false)
 		else
 			game:GetService("RunService"):Set3dRenderingEnabled(true)
+
 		end
     end
 })
