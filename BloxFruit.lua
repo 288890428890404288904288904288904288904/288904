@@ -1583,7 +1583,7 @@ local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/hajib
 local Wait = library.subs.Wait
 
 local PepsisWorld = library:CreateWindow({
-    Name = "Alptra Hub",
+    Name = "Hyper Hub",
     Themeable = {
     Info = " "
     }
