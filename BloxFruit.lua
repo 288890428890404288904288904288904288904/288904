@@ -150,7 +150,7 @@ _G.Settings = {
 	Auto_Store_Fruit = false;
 }
 
-local foldername = "Alptra Folder"
+local foldername = "Hyper Folder"
 local filename = "BloxFruit "..game.Players.LocalPlayer.Name.." Config.json"
  
 function saveSettings()
