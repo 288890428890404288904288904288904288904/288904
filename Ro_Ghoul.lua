@@ -2238,7 +2238,7 @@ function Flux:Window(text, bottom,mainclr,toclose)
     end
     return Tabs
 end
-local win = Flux:Window("Alptra Hub", "Ro Ghoul", Color3.fromRGB(255, 70, 70 ), Enum.KeyCode.RightControl)
+local win = Flux:Window("Hyper Hub", "Ro Ghoul", Color3.fromRGB(255, 70, 70 ), Enum.KeyCode.RightControl)
 local page = win:Tab("Status Tab", "http://www.roblox.com/asset/?id=6023426915")
 local page1 = win:Tab("Main Tab", "http://www.roblox.com/asset/?id=6023426915")
 local page2 = win:Tab("Stats Tab", "http://www.roblox.com/asset/?id=6023426915")
