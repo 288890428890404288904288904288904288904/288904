@@ -17,7 +17,7 @@ function GetSubPrefix(str)
     return var
 end
 
-local title_string = "Alptra | User Status : "..CheckStatus(game.Players.LocalPlayer.Name).." | %A, %B"
+local title_string = "Hyper | User Status : "..CheckStatus(game.Players.LocalPlayer.Name).." | %A, %B"
 local day = os.date(" %d", os.time())
 local second_string = ", %Y."
 title_string = os.date(title_string, os.time())..day..GetSubPrefix(day)..os.date(second_string, os.time())
@@ -374,7 +374,7 @@ local ThemeManager = loadstring(game:HttpGet(repo .. 'addons/ThemeManager.lua'))
 local SaveManager = loadstring(game:HttpGet(repo .. 'addons/SaveManager.lua'))()
 
 local Window = Library:CreateWindow({
-    Title = 'Alptra Hub | Da Hood',
+    Title = 'Hyper Hub | Da Hood',
     Center = true, 
     AutoShow = true,
 })
