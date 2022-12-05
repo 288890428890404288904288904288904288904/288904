@@ -7733,22 +7733,6 @@ MainMiscSection:AddToggle({
 })
 
 MainMiscSection:AddToggle({
-    Name = "Remove Fog",
-    Flag = "Remove_Fog",
-    Value = false,
-    Callback = function(value)
-        _G.Remove_Fog = value
-		if not _G.Remove_Fog then return end
-		while _G.Remove_Fog do wait()
-			game.Lighting.FogEnd = 9e9
-			if not _G.Remove_Fog then
-				game.Lighting.FogEnd = 2500
-			end
-		end
-    end
-})
-
-MainMiscSection:AddToggle({
     Name = "Auto confetti",
     Flag = "Auto_confetti",
     Value = _G.Settings.Auto_confetti,
