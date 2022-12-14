@@ -49,8 +49,7 @@ _G.Settings = {
 	Select_Health = 20;
     Select_Mode_Farm = "Normal Mode";
     Select_Bring_Mob_Mode = "Bring Mob [Normal]";
-	Normal_Fast_Attack = true;
-    Extra_Fast_Attack = true;
+	Fast_Attack = true;
 	Auto_Set_Spawn = true;
 	Select_Level_to_Redeem_All_Code = 1;
 	Auto_Redeem_All_Code = false;
@@ -185,7 +184,7 @@ if _G.Settings.Select_Weapon == nil then
             if game.Players.LocalPlayer.Backpack:FindFirstChild(tostring(v.Name)) then
                 _G.Settings.Select_Weapon = tostring(v.Name)
             end
-        end
+        end 
     end
 end
 
@@ -2119,16 +2118,6 @@ MainSection:AddToggle({
     end
 })
 
-MainSection:AddToggle({
-    Name = "Auto Farm Chest Hop",
-    Flag = "Auto_Farm_Chest_Hop",
-	Value = _G.Settings.Auto_Farm_Chest_Hop,
-    Callback = function(value)
-        _G.Auto_Farm_Chest_Hop = value    
-		_G.Settings.Auto_Farm_Chest_Hop = value
-		saveSettings()
-    end
-})
 
 spawn(function()
     while wait() do
@@ -2578,72 +2567,56 @@ spawn(function()
 	end
 end)
 
+
+WeaponList = {}
+for i,v in pairs(game.Players.LocalPlayer.Backpack:GetChildren()) do  
+	if v:IsA("Tool") then
+		table.insert(WeaponList ,v.Name)
+	end
+end
+
+local Weapon = MainTab:CreateSection({
+    Name = "Weapon",
+	Side = "Right"
+})
+
+Weapon:AddDropdown({
+    Name = "Select Weapon",
+    Flag = "Select_Weapon",
+	Value = _G.Settings.Select_Weapon,
+    List = WeaponList,
+    Callback = function(value)
+        _G.Select_Weapon = value
+		_G.Settings.Select_Weapon = value
+		saveSettings()
+    end
+})
+
+Weapon:AddButton({
+	Name = "Refresh Weapon",
+	Callback = function()
+		table.clear(WeaponList)
+		for i,v in pairs(game.Players.LocalPlayer.Backpack:GetChildren()) do  
+			if v:IsA("Tool") then
+				table.insert(WeaponList ,v.Name)
+			end
+		end
+	end
+})
+
 local SettingSection = MainTab:CreateSection({
     Name = "Setting",
 	Side = "Right"
 })
 
-SettingSection:AddSlider({
-    Name = "Select Distance",
-    Flag = "Select_Distance",
-    Value = _G.Settings.Select_Distance,
-    Min = 1,
-    Max = 100,
-    Textbox = true,
-    Format = function(value)
-        _G.Select_Distance = value
-		_G.Settings.Select_Distance = value
-		saveSettings()
-		return "Distance : " .. tostring(value)
-    end
-})
-
-SettingSection:AddSlider({
-    Name = "Health For Mastery Farm",
-    Flag = "Health_For_Mastery_Farm",
-    Value = _G.Settings.Select_Health,
-    Min = 1,
-    Max = 100,
-    Textbox = true,
-    Format = function(value)
-        _G.Select_Health = value
-		_G.Settings.Select_Health = value
-		saveSettings()
-		return "Health : ".. tostring(value).." [For Mastery Farm]"
-    end
-})
-
-SettingSection:AddDropdown({
-    Name = "Select Mode Farm",
-    Flag = "Select_Mode_Farm",
-	Value = _G.Settings.Select_Mode_Farm,
-    List = {"Normal Mode","Fast Mode","No Quest","Fruit Mastery Mode","Gun Mastery Mode"},
-    Callback = function(value)
-        _G.Select_Mode_Farm = value
-		_G.Settings.Select_Mode_Farm = value
-		saveSettings()
-    end
-})
-
-SettingSection:AddDropdown({
-    Name = "Select Mode Bring Mob",
-    Flag = "Select_Mode_Bring_Mob",
-	Value = _G.Settings.Select_Bring_Mob_Mode,
-    List = {"Bring Mob [Normal]","Bring Mob [Extra]"},
-    Callback = function(value)
-        _G.Select_Bring_Mob_Mode = value
-		_G.Settings.Select_Bring_Mob_Mode = value
-		saveSettings()
-    end
-})
 
 SettingSection:AddToggle{
     Name = "Fast Attack",
-    Flag = "Fast_Attack_[Normal]",
-    Value = _G.Settings.Normal_Fast_Attack,
+    Flag = "Fast_Attack",
+    Value = _G.Settings.Fast_Attack,
     Callback  = function(value)
-        _G.Normal_Fast_Attack = value
-		_G.Settings.Normal_Fast_Attack = value
+        _G.Fast_Attack = value
+		_G.Settings.Fast_Attack = value
 		saveSettings()
     end
 }
@@ -2655,7 +2628,7 @@ for i,v in pairs(getreg()) do
              if typeof(w) == "table" then
                 spawn(function()
                     game:GetService("RunService").RenderStepped:Connect(function()
-                        if _G.Normal_Fast_Attack then
+                        if _G.Fast_Attack then
                             pcall(function()
 								if game.Players.LocalPlayer.Character:FindFirstChild("Combat") or game.Players.LocalPlayer.Character:FindFirstChild("Black Leg") or game.Players.LocalPlayer.Character:FindFirstChild("Electro") or game.Players.LocalPlayer.Character:FindFirstChild("Fishman Karate") or game.Players.LocalPlayer.Character:FindFirstChild("Dragon Claw") or game.Players.LocalPlayer.Character:FindFirstChild("Superhuman") or game.Players.LocalPlayer.Character:FindFirstChild("Sharkman Karate") then
 									w.activeController.increment = 3
@@ -2679,197 +2652,6 @@ for i,v in pairs(getreg()) do
     end
 end
 
-SettingSection:AddToggle{
-    Name = "Super Fast Attack",
-    Flag = "Fast_Attack_[Extra]",
-    Value = _G.Settings.Extra_Fast_Attack,
-    Callback  = function(value)
-        _G.Extra_Fast_Attack = value
-        _G.Settings.Extra_Fast_Attack = value
-        saveSettings()
-    end
-}
-
-spawn(function()
-	while task.wait() do
-        if _G.Extra_Fast_Attack then
-			pcall(function()
-				wait(0.2)
-				local plr = game.Players.LocalPlayer
-
-				local CbFw = debug.getupvalues(require(plr.PlayerScripts.CombatFramework))
-				local CbFw2 = CbFw[2]
-				
-				function GetCurrentBlade() 
-				local p13 = CbFw2.activeController
-				local ret = p13.blades[1]
-				if not ret then return end
-				while ret.Parent~=game.Players.LocalPlayer.Character do ret=ret.Parent end
-				return ret
-				end
-				function AttackNoCD() 
-				local AC = CbFw2.activeController
-				for i = 1, 1 do 
-				local bladehit = require(game.ReplicatedStorage.CombatFramework.RigLib).getBladeHits(
-					plr.Character,
-					{plr.Character.HumanoidRootPart},
-					60
-				)
-				local cac = {}
-				local hash = {}
-				for k, v in pairs(bladehit) do
-					if v.Parent:FindFirstChild("HumanoidRootPart") and not hash[v.Parent] then
-						table.insert(cac, v.Parent.HumanoidRootPart)
-						hash[v.Parent] = true
-					end
-				end
-				bladehit = cac
-				if #bladehit > 0 then
-					local u8 = debug.getupvalue(AC.attack, 5)
-					local u9 = debug.getupvalue(AC.attack, 6)
-					local u7 = debug.getupvalue(AC.attack, 4)
-					local u10 = debug.getupvalue(AC.attack, 7)
-					local u12 = (u8 * 798405 + u7 * 727595) % u9
-					local u13 = u7 * 798405
-					(function()
-						u12 = (u12 * u9 + u13) % 1099511627776
-						u8 = math.floor(u12 / u9)
-						u7 = u12 - u8 * u9
-					end)()
-					u10 = u10 + 1
-					debug.setupvalue(AC.attack, 5, u8)
-					debug.setupvalue(AC.attack, 6, u9)
-					debug.setupvalue(AC.attack, 4, u7)
-					debug.setupvalue(AC.attack, 7, u10)
-					pcall(function()
-						for k, v in pairs(AC.animator.anims.basic) do
-							v:Play()
-						end                  
-					end)
-					if plr.Character:FindFirstChildOfClass("Tool") and AC.blades and AC.blades[1] then 
-						game:GetService("ReplicatedStorage").RigControllerEvent:FireServer("weaponChange",tostring(GetCurrentBlade()))
-						game.ReplicatedStorage.Remotes.Validator:FireServer(math.floor(u12 / 1099511627776 * 16777215), u10)
-						game:GetService("ReplicatedStorage").RigControllerEvent:FireServer("hit", bladehit, i, "") 
-					end
-				end
-				end
-				end
-				
-				require(game.ReplicatedStorage.Util.CameraShaker):Stop()
-				spawn(function()
-				while task.wait() do
-				pcall(function()
-				  if UseFast then
-					  if _G.Extra_Fast_Attack then
-						AttackNoCD() 
-					  end
-				  end
-				end)
-				end
-				end)
-				
-				local CameraShaker = require(game.ReplicatedStorage.Util.CameraShaker)
-				for i,v in pairs(getreg()) do
-				if typeof(v) == "function" and getfenv(v).script == game:GetService("Players").LocalPlayer.PlayerScripts.CombatFramework then
-				for x,w in pairs(debug.getupvalues(v)) do
-					 if typeof(w) == "table" then
-						task.spawn(function() 
-							game:GetService("RunService").RenderStepped:Connect(function()
-								if _G.Extra_Fast_Attack then
-									pcall(function()
-										if game.Players.LocalPlayer.Character:FindFirstChild("Combat") or game.Players.LocalPlayer.Character:FindFirstChild("Black Leg") or game.Players.LocalPlayer.Character:FindFirstChild("Electro") or game.Players.LocalPlayer.Character:FindFirstChild("Fishman Karate") or game.Players.LocalPlayer.Character:FindFirstChild("Dragon Claw") or game.Players.LocalPlayer.Character:FindFirstChild("Superhuman") or game.Players.LocalPlayer.Character:FindFirstChild("Sharkman Karate") then
-											w.activeController.increment = 3
-										else
-											w.activeController.increment = 4
-										end             
-										CameraShaker:Stop()
-										w.activeController.timeToNextAttack = -(math.huge^math.huge^math.huge)
-										w.activeController.attacking = false
-										w.activeController.timeToNextBlock = 0
-										w.activeController.blocking = false                            
-										w.activeController.hitboxMagnitude = 50
-										w.activeController.humanoid.AutoRotate = true
-										  w.activeController.focusStart = 0
-									end)
-								end
-							end)
-						end)
-					end
-				end
-				end
-				end
-				
-				task.spawn(function() 
-				while task.wait() do
-				if _G.Extra_Fast_Attack then
-					pcall(function()
-						wait(0.1)
-						local AC = CbFw2.activeController
-						for i = 1,1 do 
-							local bladehit = require(game.ReplicatedStorage.CombatFramework.RigLib).getBladeHits(
-								plr.Character,
-								{plr.Character.HumanoidRootPart},
-								60
-						 )
-				local cac = {}
-				local hash = {}
-				for k, v in pairs(bladehit) do
-					if v.Parent:FindFirstChild("HumanoidRootPart") and not hash[v.Parent] then
-						table.insert(cac, v.Parent.HumanoidRootPart)
-						hash[v.Parent] = true
-					end
-				end
-				bladehit = cac
-				if #bladehit > 0 then
-					local u8 = debug.getupvalue(AC.attack, 5)
-					local u9 = debug.getupvalue(AC.attack, 6)
-					local u7 = debug.getupvalue(AC.attack, 4)
-					local u10 = debug.getupvalue(AC.attack, 7)
-					local u12 = (u8 * 798405 + u7 * 727595) % u9
-					local u13 = u7 * 798405
-					(function()
-						u12 = (u12 * u9 + u13) % 1099511627776
-						u8 = math.floor(u12 / u9)
-						u7 = u12 - u8 * u9
-					end)()
-					u10 = u10 + 1
-					debug.setupvalue(AC.attack, 5, u8)
-					debug.setupvalue(AC.attack, 6, u9)
-					debug.setupvalue(AC.attack, 4, u7)
-					debug.setupvalue(AC.attack, 7, u10)
-					pcall(function()
-						for k, v in pairs(AC.animator.anims.basic) do
-							v:Play()
-						end                  
-					end)
-					if plr.Character:FindFirstChildOfClass("Tool") and AC.blades and AC.blades[1] then 
-						game:GetService("ReplicatedStorage").RigControllerEvent:FireServer("weaponChange",tostring(GetCurrentBlade()))
-						game.ReplicatedStorage.Remotes.Validator:FireServer(math.floor(u12 / 1099511627776 * 16777215), u10)
-						game:GetService("ReplicatedStorage").RigControllerEvent:FireServer("hit", bladehit, i, "") 
-								end
-							end
-						end
-					end)
-				end
-				end
-				end)
-				
-				require(game.ReplicatedStorage.Util.CameraShaker):Stop()
-				spawn(function()
-				while task.wait() do
-				pcall(function()
-				  if UseFast then
-					  if _G.Extra_Fast_Attack then
-						AttackNoCD() 
-					  end
-				  end
-				end)
-				end
-				end)
-			end)
-        end
-	end
-end)
 
 SettingSection:AddToggle{
     Name = "Auto Set Spawn",
@@ -2894,60 +2676,33 @@ spawn(function()
 	end
 end)
 
+local ReCode = MainTab:CreateSection({
+    Name = "Code",
+	Side = "Right"
+})
+
 Code = {
-	"EXP_5B",
-	"CONTROL",
-	"UPDATE11",
-	"XMASEXP",
-	"1BILLION",
-	"ShutDownFix2",
-	"TantaiGaming",
-	"STRAWHATMAINE",
-	"TantaiGaming",
-	"Colosseum",
-	"Axiore",
-	"Sub2Daigrock",
-	"Sky Island 3",
-	"Sub2OfficialNoobie",
-	"SUB2NOOBMASTER123",
-	"THEGREATACE",
-	"FUDD10",
-	"BIGNEWS",
-	"FUDD10",
-	"SUB2GAMERROBOT_EXP1",
-	"UPD15",
-	"2BILLION",
-	"UPD16",
-	"3BVISITS",
-	"fudd10_v2",
+	"ADMINGIVEAWAY ",
+	"Enyu_is_Pro ",
+	"Magicbus",
+	"Sub2Fer999",
 	"Starcodeheo",
-	"Magicbus",
 	"JCWK",
-	"Bluxxy",
-	"GAMERROBOT_YT",
-	"kittgaming",
-	"Enyu_is_Pro",
-	"Magicbus",
-	"Bluxxy",
-	"JCWK",
+	"KittGaming",
 	"Bluxxy",
 	"fudd10_v2",
-	"FUDD10",
-	"BIGNEWS",
-	"THEGREATACE",
-	"SUB2GAMERROBOT_EXP1",
-	"Enyu_is_Pro",
-	"StrawHatMaine",
-	"Bluxxy",
-	"SUB2NOOBMASTER123",
-	"Bluxxy",
-	"fudd10_v2",
+	"Sub2OfficialNoobie",
+	"TheGreatAce",
 	"Axiore",
 	"Sub2Daigrock",
-	"Enyu_is_Pro"
+	"TantaiGaming",
+	"StrawHatMaine",
+	"Bignews",
+	"Fudd10",
+	"SUB2GAMERROBOT_EXP1"
 }
 
-SettingSection:AddSlider({
+ReCode:AddSlider({
     Name = "Select Level to Redeem All Code",
     Flag = "Select_Level_to_Redeem_All_Code",
     Value = _G.Settings.Select_Level_to_Redeem_All_Code,
@@ -2962,7 +2717,7 @@ SettingSection:AddSlider({
     end
 })
 
-SettingSection:AddToggle{
+ReCode:AddToggle{
     Name = "Auto Redeem All Code",
     Flag = "Auto_Redeem_All_Code",
     Value = _G.Settings.Auto_Redeem_All_Code,
@@ -2992,7 +2747,7 @@ spawn(function()
     end
 end)
 
-SettingSection:AddButton({
+ReCode:AddButton({
 	Name = "Redeem All Code",
 	Callback = function()
 		for i,v in pairs(Code) do
@@ -3001,38 +2756,13 @@ SettingSection:AddButton({
 	end
 })
 
-WeaponList = {}
-for i,v in pairs(game.Players.LocalPlayer.Backpack:GetChildren()) do  
-	if v:IsA("Tool") then
-		table.insert(WeaponList ,v.Name)
-	end
-end
 
-SettingSection:AddDropdown({
-    Name = "Select Weapon",
-    Flag = "Select_Weapon",
-	Value = _G.Settings.Select_Weapon,
-    List = WeaponList,
-    Callback = function(value)
-        _G.Select_Weapon = value
-		_G.Settings.Select_Weapon = value
-		saveSettings()
-    end
+local Skill = MainTab:CreateSection({
+    Name = "Auto Skill",
+	Side = "Left"
 })
 
-SettingSection:AddButton({
-	Name = "Refresh Weapon",
-	Callback = function()
-		table.clear(WeaponList)
-		for i,v in pairs(game.Players.LocalPlayer.Backpack:GetChildren()) do  
-			if v:IsA("Tool") then
-				table.insert(WeaponList ,v.Name)
-			end
-		end
-	end
-})
-
-SettingSection:AddToggle({
+Skill:AddToggle({
     Name = "Skill Z",
     Flag = "Skill_Z",
     Value = _G.Settings.Skill_Z,
@@ -3043,7 +2773,7 @@ SettingSection:AddToggle({
     end
 })
 
-SettingSection:AddToggle({
+Skill:AddToggle({
     Name = "Skill X",
     Flag = "Skill_X",
     Value = _G.Settings.Skill_X,
@@ -3054,7 +2784,7 @@ SettingSection:AddToggle({
     end
 })
 
-SettingSection:AddToggle({
+Skill:AddToggle({
     Name = "Skill C",
     Flag = "Skill_C",
     Value = _G.Settings.Skill_C,
@@ -3065,7 +2795,7 @@ SettingSection:AddToggle({
     end
 })
 
-SettingSection:AddToggle({
+Skill:AddToggle({
     Name = "Skill V",
     Flag = "Skill_V",
     Value = _G.Settings.Skill_V,
@@ -3076,14 +2806,15 @@ SettingSection:AddToggle({
     end
 })
 
-local OtherSection = MainTab:CreateSection({
-	Name = "Other",
-	Side = "Left"
-})
 
 if World1 then
 
-	OtherSection:AddToggle{
+	local Saber = MainTab:CreateSection({
+		Name = "Saber",
+		Side = "Left"
+	})
+
+	Saber:AddToggle{
 		Name = "Auto Saber",
 		Flag = "Auto_Saber",
 		Value = _G.Settings.Auto_Saber,
@@ -3095,7 +2826,7 @@ if World1 then
 		end
 	}
 
-	OtherSection:AddToggle{
+	Saber:AddToggle{
 		Name = "Auto Saber Hop",
 		Flag = "Auto_Saber_Hop",
 		Value = _G.Settings.Auto_Saber_Hop,
@@ -3313,7 +3044,12 @@ if World1 then
 		end
 	end)
 
-	OtherSection:AddToggle{
+	local Pole = MainTab:CreateSection({
+		Name = "Pole",
+		Side = "Right"
+	})
+
+	Pole:AddToggle{
 		Name = "Auto Pole V1",
 		Flag = "Auto_Pole_V1",
 		Value = _G.Settings.Auto_Pole,
@@ -3325,7 +3061,7 @@ if World1 then
 		end
 	}
 
-	OtherSection:AddToggle{
+	Pole:AddToggle{
 		Name = "Auto Pole V1 Hop",
 		Flag = "Auto_Pole_V1_Hop",
 		Value = _G.Settings.Auto_Pole_Hop,
@@ -3364,7 +3100,12 @@ if World1 then
 		end
 	end)
 
-	OtherSection:AddToggle{
+	local Material = MainTab:CreateSection({
+		Name = "Material",
+		Side = "Left"
+	})
+
+	Material:AddToggle{
 		Name = "Auto Farm Fish Tail",
 		Flag = "Auto_Farm_Fish_Tail",
 		Value = _G.Settings.Auto_Farm_Fish_Tail,
@@ -3435,7 +3176,7 @@ if World1 then
 		end
 	end)
 
-	OtherSection:AddToggle{
+	Material:AddToggle{
 		Name = "Auto Farm Magma Ore",
 		Flag = "Auto_Farm_Magma_Ore",
 		Value = _G.Settings.Auto_Farm_Magma_Ore,
@@ -3503,7 +3244,7 @@ if World1 then
 		end
 	end)
 
-	OtherSection:AddToggle{
+	Material:AddToggle{
 		Name = "Auto Farm Scrap and Leather",
 		Flag = "Auto_Farm_Scrap_and_Leather",
 		Value = _G.Settings.Auto_Farm_Scrap_and_Leather,
@@ -3571,7 +3312,7 @@ if World1 then
 		end
 	end)
 
-	OtherSection:AddToggle{
+	Material:AddToggle{
 		Name = "Auto Farm Angel Wing",
 		Flag = "Auto_Farm_Angel_Wing",
 		Value = _G.Settings.Auto_Farm_Angel_Wing,
@@ -3642,7 +3383,12 @@ if World1 then
 
 elseif World2 then
 
-	OtherSection:AddToggle{
+	local Factory = MainTab:CreateSection({
+		Name = "Factory",
+		Side = "Left"
+	})
+
+	Factory:AddToggle{
 		Name = "Auto Factory Farm",
 		Flag = "Auto_Factory_Farm",
 		Value = _G.Settings.Auto_Factory_Farm,
@@ -3685,7 +3431,12 @@ elseif World2 then
 		end
 	end)
 
-	OtherSection:AddToggle{
+	local Ectoplasm = MainTab:CreateSection({
+		Name = "Ectoplasm",
+		Side = "Right"
+	})
+
+	Ectoplasm:AddToggle{
 		Name = "Auto Farm Ectoplasm",
 		Flag = "Auto_Farm_Ectoplasm",
 		Value = _G.Settings.Auto_Farm_Ectoplasm,
@@ -3751,8 +3502,13 @@ elseif World2 then
 			end
 		end
 	end)
+	
+	local Bartilo = MainTab:CreateSection({
+		Name = "Bartilo",
+		Side = "Left"
+	})
 
-	OtherSection:AddToggle{
+	Bartilo:AddToggle{
 		Name = "Auto Bartilo Quest",
 		Flag = "Auto_Bartilo_Quest",
 		Value = _G.Settings.Auto_Bartilo_Quest,
@@ -3868,7 +3624,12 @@ elseif World2 then
 		end)
 	end)
 
-	OtherSection:AddToggle{
+	local Rengoku = MainTab:CreateSection({
+		Name = "Rengoku",
+		Side = "Right"
+	})
+
+	Rengoku:AddToggle{
 		Name = "Auto Rengoku",
 		Flag = "Auto_Rengoku",
 		Value = _G.Settings.Auto_Rengoku,
@@ -3931,7 +3692,12 @@ elseif World2 then
 		end
 	end)
 
-	OtherSection:AddToggle{
+	local Material2 = MainTab:CreateSection({
+		Name = "Material",
+		Side = "Left"
+	})
+
+	Material2:AddToggle{
 		Name = "Auto Farm Scrap and Leather",
 		Flag = "Auto_Farm_Scrap_and_Leather",
 		Value = _G.Settings.Auto_Farm_Scrap_and_Leather,
@@ -3997,7 +3763,7 @@ elseif World2 then
 		end
 	end)
 
-	OtherSection:AddToggle{
+	Material2:AddToggle{
 		Name = "Auto Farm Radioactive",
 		Flag = "Auto_Farm_Radioactive",
 		Value = _G.Settings.Auto_Farm_Radioactive,
@@ -4063,7 +3829,7 @@ elseif World2 then
 		end
 	end)
 
-	OtherSection:AddToggle{
+	Material2:AddToggle{
 		Name = "Auto Farm Vampire Fang",
 		Flag = "Auto_Farm_Vampire_Fang",
 		Value = _G.Settings.Auto_Farm_Vampire_Fang,
@@ -4129,7 +3895,7 @@ elseif World2 then
 		end
 	end)
 
-	OtherSection:AddToggle{
+	Material2:AddToggle{
 		Name = "Auto Farm Magma Ore",
 		Flag = "Auto_Farm_Magma_Ore",
 		Value = _G.Settings.Auto_Farm_Magma_Ore,
@@ -4197,7 +3963,7 @@ elseif World2 then
 		end
 	end)
 
-	OtherSection:AddToggle{
+	Material2:AddToggle{
 		Name = "Auto Farm Mystic Droplet",
 		Flag = "Auto_Farm_Mystic_Droplet",
 		Value = _G.Settings.Auto_Farm_Mystic_Droplet,
@@ -4263,8 +4029,13 @@ elseif World2 then
 		end
 	end)
 
-	OtherSection:AddToggle{
-		Name = "Auto Evo Race [V2]",
+	local Race = MainTab:CreateSection({
+		Name = "Race",
+		Side = "Right"
+	})
+
+	Race:AddToggle{
+		Name = "Auto Evo Race V.2",
 		Flag = "Auto_Evo_Race_V2",
 		Value = _G.Settings.Auto_Evo_Race_V2,
 		Callback  = function(value)
@@ -4343,7 +4114,12 @@ elseif World2 then
 		end)
 	end)
 
-	OtherSection:AddToggle{
+	local Dofa = MainTab:CreateSection({
+		Name = "Swan Glasses",
+		Side = "Left"
+	})
+
+	Dofa:AddToggle{
 		Name = "Auto Swan Glasses",
 		Flag = "Auto_Swan_Glasses",
 		Value = _G.Settings.Auto_Swan_Glasses,
@@ -4355,7 +4131,7 @@ elseif World2 then
 		end
 	}
 	
-	OtherSection:AddToggle{
+	Dofa:AddToggle{
 		Name = "Auto Swan Glasses Hop",
 		Flag = "Auto_Swan_Glasses_Hop",
 		Value = _G.Settings.Auto_Swan_Glasses_Hop,
@@ -4395,7 +4171,12 @@ elseif World2 then
 		end
 	end)
 
-	OtherSection:AddToggle{
+	local DragonTrident = MainTab:CreateSection({
+		Name = "Dragon Trident",
+		Side = "Left"
+	})
+
+	DragonTrident:AddToggle{
 		Name = "Auto Dragon Trident",
 		Flag = "Auto_Dragon_Trident",
 		Value = _G.Settings.Auto_Dragon_Trident,
@@ -4407,7 +4188,7 @@ elseif World2 then
 		end
 	}
 	
-	OtherSection:AddToggle{
+	DragonTrident:AddToggle{
 		Name = "Auto Dragon Trident Hop",
 		Flag = "Auto_Dragon_Trident_Hop",
 		Value = _G.Settings.Auto_Dragon_Trident_Hop,
@@ -4449,7 +4230,12 @@ elseif World2 then
 		end
 	end)
 
-	OtherSection:AddToggle{
+	local LegendarySword = MainTab:CreateSection({
+		Name = "Legendary Sword",
+		Side = "Left"
+	})
+
+	LegendarySword:AddToggle{
 		Name = "Auto Buy Legendary Sword",
 		Flag = "Auto_Buy_Legendary_Sword",
 		Value = _G.Settings.Auto_Buy_Legendary_Sword,
@@ -4473,7 +4259,12 @@ elseif World2 then
 		end
 	end)
 	
-	OtherSection:AddToggle{
+	local Enchancement = MainTab:CreateSection({
+		Name = "Enchancement",
+		Side = "Right"
+	})
+
+	Enchancement:AddToggle{
 		Name = "Auto Buy Enchancement",
 		Flag = "Auto_Buy_Enchancement",
 		Value = _G.Settings.Auto_Buy_Enchancement,
@@ -4499,7 +4290,13 @@ elseif World2 then
 
 elseif World3 then
 
-	OtherSection:AddToggle{
+	local SoulReaper = MainTab:CreateSection({
+		Name = "Soul Reaper",
+		Side = "Left"
+	})
+	
+
+	SoulReaper:AddToggle{
 		Name = "Auto Soul Reaper",
 		Flag = "Auto_Soul_Reaper",
 		Value = _G.Settings.Auto_Soul_Reaper,
@@ -4511,7 +4308,7 @@ elseif World3 then
 		end
 	}
 
-	OtherSection:AddToggle{
+	SoulReaper:AddToggle{
 		Name = "Auto Soul Reaper Hop",
 		Flag = "Auto_Soul_Reaper_Hop",
 		Value = _G.Settings.Auto_Soul_Reaper_Hop,
@@ -4565,7 +4362,13 @@ elseif World3 then
 		end
 	end)
 
-	OtherSection:AddToggle{
+	local Materrial3 = MainTab:CreateSection({
+		Name = "Materrial",
+		Side = "Left"
+	})
+	
+
+	Materrial3:AddToggle{
 		Name = "Auto Farm Scrap and Leather",
 		Flag = "Auto_Farm_Scrap_and_Leather",
 		Value = _G.Settings.Auto_Farm_Scrap_and_Leather,
@@ -4631,7 +4434,12 @@ elseif World3 then
 		end
 	end)
 
-	OtherSection:AddToggle{
+	local GunPowder = MainTab:CreateSection({
+		Name = "Gun Powder",
+		Side = "Right"
+	})
+
+	GunPowder:AddToggle{
 		Name = "Auto Farm GunPowder",
 		Flag = "Auto_Farm_GunPowder",
 		Value = _G.Settings.Auto_Farm_GunPowder,
@@ -4660,7 +4468,7 @@ elseif World3 then
 			end)
 		end)
 	end)
-
+	
 	spawn(function()
 		while wait() do
 			if _G.Auto_Farm_GunPowder and World3 then
@@ -4697,7 +4505,7 @@ elseif World3 then
 		end
 	end)
 
-	OtherSection:AddToggle{
+	Materrial3:AddToggle{
 		Name = "Auto Farm Dragon Scales",
 		Flag = "Auto_Farm_Dragon_Scales",
 		Value = _G.Settings.Auto_Farm_Dragon_Scales,
@@ -4763,7 +4571,7 @@ elseif World3 then
 		end
 	end)
 
-	OtherSection:AddToggle{
+	Materrial3:AddToggle{
 		Name = "Auto Farm Fish Tail",
 		Flag = "Auto_Farm_Fish_Tail",
 		Value = _G.Settings.Auto_Farm_Fish_Tail,
@@ -4831,7 +4639,7 @@ elseif World3 then
 		end
 	end)
 
-	OtherSection:AddToggle{
+	Materrial3:AddToggle{
 		Name = "Auto Farm Mini Tusk",
 		Flag = "Auto_Farm_Mini_Tusk",
 		Value = _G.Settings.Auto_Farm_Mini_Tusk,
@@ -4896,8 +4704,13 @@ elseif World3 then
 			end
 		end
 	end)
+
+	local Bone = MainTab:CreateSection({
+		Name = "Bone",
+		Side = "Left"
+	})
 	
-	OtherSection:AddToggle{
+	Bone:AddToggle{
 		Name = "Auto Farm Bone",
 		Flag = "Auto_Farm_Bone",
 		Value = _G.Settings.Auto_Farm_Bone,
@@ -4969,7 +4782,7 @@ elseif World3 then
 		end
 	end)
 
-	OtherSection:AddToggle{
+	Materrial3:AddToggle{
 		Name = "Auto Farm Conjured Cocoa",
 		Flag = "Auto_Farm_Conjured_Cocoa",
 		Value = _G.Settings.Auto_Farm_Conjured_Cocoa,
@@ -5037,7 +4850,12 @@ elseif World3 then
 		end
 	end)
 
-	OtherSection:AddToggle{
+	local DoughDungeon = MainTab:CreateSection({
+		Name = "Dough Dungeon",
+		Side = "Right"
+	})
+
+	DoughDungeon:AddToggle{
 		Name = "Auto Open Dough Dungeon",
 		Flag = "Auto_Open_Dough_Dungeon",
 		Value = _G.Settings.Auto_Open_Dough_Dungeon,
@@ -5076,7 +4894,6 @@ elseif World3 then
 							game.StarterGui:SetCore("SendNotification", {
 								Title = "Notification", 
 								Text = "Not Have Enough Material" ,
-								Icon = "http://www.roblox.com/asset/?id=9956697825",
 								Duration = 2.5
 							})
 						else
@@ -5172,7 +4989,13 @@ elseif World3 then
 		end
 	end)
 
-	OtherSection:AddToggle{
+	local Yama = MainTab:CreateSection({
+		Name = "Yama",
+		Side = "Left"
+	})
+	
+
+	Yama:AddToggle{
 		Name = "Auto Yama",
 		Flag = "Auto_Yama",
 		Value = _G.Settings.Auto_Yama,
@@ -5196,7 +5019,7 @@ elseif World3 then
 		end
 	end)
 
-	OtherSection:AddToggle{
+	Bone:AddToggle{
 		Name = "Auto Trade Bone",
 		Flag = "Auto_Trade_Bone",
 		Value = _G.Settings.Auto_Trade_Bone,
@@ -5222,7 +5045,12 @@ elseif World3 then
 		end
 	end)
 
-	OtherSection:AddToggle{
+	local RainbowHaki = MainTab:CreateSection({
+		Name = "Rainbow Haki",
+		Side = "Left"
+	})
+	
+	RainbowHaki:AddToggle{
 		Name = "Auto Rainbow Haki",
 		Flag = "Auto_Rainbow_Haki",
 		Value = _G.Settings.Auto_Rainbow_Haki,
@@ -5234,7 +5062,7 @@ elseif World3 then
 		end
 	}
 
-	OtherSection:AddToggle{
+	RainbowHaki:AddToggle{
 		Name = "Auto Rainbow Haki Hop",
 		Flag = "Auto_Rainbow_Haki_Hop",
 		Value = _G.Settings.Auto_Rainbow_Haki_Hop,
@@ -5395,7 +5223,12 @@ elseif World3 then
 		end)
 	end)
 
-	OtherSection:AddToggle{
+	local MusketeerHat = MainTab:CreateSection({
+		Name = "Musketeer Hat",
+		Side = "Right"
+	})
+
+	MusketeerHat:AddToggle{
 		Name = "Auto Musketeer Hat",
 		Flag = "Auto_Musketeer_Hat",
 		Value = _G.Settings.Auto_Musketeer_Hat,
@@ -5501,7 +5334,12 @@ elseif World3 then
 		end)
 	end)
 
-	OtherSection:AddToggle{
+	local HolyTorch = MainTab:CreateSection({
+		Name = "Holy Torch",
+		Side = "Left"
+	})
+
+	HolyTorch:AddToggle{
 		Name = "Auto Holy Torch",
 		Flag = "Auto_Holy_Torch",
 		Value = _G.Settings.Auto_Holy_Torch,
@@ -5532,7 +5370,12 @@ elseif World3 then
 		end
 	end)
 
-	OtherSection:AddToggle{
+	local Canvander = MainTab:CreateSection({
+		Name = "Canvander",
+		Side = "Right"
+	})
+
+	Canvander:AddToggle{
 		Name = "Auto Canvander",
 		Flag = "Auto_Canvander",
 		Value = _G.Settings.Auto_Canvander,
@@ -5544,7 +5387,7 @@ elseif World3 then
 		end
 	}
 
-	OtherSection:AddToggle{
+	Canvander:AddToggle{
 		Name = "Auto Canvander Hop",
 		Flag = "Auto_Canvander_Hop",
 		Value = _G.Settings.Auto_Canvander_Hop,
@@ -5586,7 +5429,12 @@ elseif World3 then
 		end
 	end)
 
-	OtherSection:AddToggle{
+	local TwinHook = MainTab:CreateSection({
+		Name = "Twin Hook",
+		Side = "Left"
+	})
+
+	TwinHook:AddToggle{
 		Name = "Auto Twin Hook",
 		Flag = "Auto_Twin_Hook",
 		Value = _G.Settings.Auto_Twin_Hook,
@@ -5598,7 +5446,7 @@ elseif World3 then
 		end
 	}
 
-	OtherSection:AddToggle{
+	TwinHook:AddToggle{
 		Name = "Auto Twin Hook Hop",
 		Flag = "Auto_Twin_Hook_Hop",
 		Value = _G.Settings.Auto_Twin_Hook_Hop,
@@ -5640,7 +5488,12 @@ elseif World3 then
 		end
 	end)
 
-	OtherSection:AddToggle{
+	local SerpentBow = MainTab:CreateSection({
+		Name = "Serpent Bow",
+		Side = "Left"
+	})
+
+	SerpentBow:AddToggle{
 		Name = "Auto Serpent Bow",
 		Flag = "Auto_Serpent_Bow",
 		Value = _G.Settings.Auto_Serpent_Bow,
@@ -5652,7 +5505,7 @@ elseif World3 then
 		end
 	}
 
-	OtherSection:AddToggle{
+	SerpentBow:AddToggle{
 		Name = "Auto Serpent Bow Hop",
 		Flag = "Auto_Serpent_Bow_Hop",
 		Value = _G.Settings.Auto_Serpent_Bow_Hop,
@@ -6109,7 +5962,7 @@ spawn(function()
 						game.StarterGui:SetCore("SendNotification", {
 							Title = "Notification", 
 							Text = "Not Have Superhuman" ,
-							Icon = "http://www.roblox.com/asset/?id=9956697825",
+
 							Duration = 2.5
 						})
 					end
@@ -6121,7 +5974,7 @@ spawn(function()
 						game.StarterGui:SetCore("SendNotification", {
 							Title = "Notification", 
 							Text = "Not Have Death Step" ,
-							Icon = "http://www.roblox.com/asset/?id=9956697825",
+
 							Duration = 2.5
 						})
 					end
@@ -6133,7 +5986,7 @@ spawn(function()
 						game.StarterGui:SetCore("SendNotification", {
 							Title = "Notification", 
 							Text = "Not Have SharkMan Karate" ,
-							Icon = "http://www.roblox.com/asset/?id=9956697825",
+
 							Duration = 2.5
 						})
 					end
@@ -6145,7 +5998,7 @@ spawn(function()
 						game.StarterGui:SetCore("SendNotification", {
 							Title = "Notification", 
 							Text = "Not Have Electric Claw" ,
-							Icon = "http://www.roblox.com/asset/?id=9956697825",
+
 							Duration = 2.5
 						})
 					end
@@ -6155,7 +6008,7 @@ spawn(function()
 								game.StarterGui:SetCore("SendNotification", {
 									Title = "Notification", 
 									Text = "Not Have Enough Material" ,
-									Icon = "http://www.roblox.com/asset/?id=9956697825",
+
 									Duration = 2.5
 								})
 							else
@@ -6166,7 +6019,7 @@ spawn(function()
 						game.StarterGui:SetCore("SendNotification", {
 							Title = "Notification", 
 							Text = "Not Have Dragon Talon" ,
-							Icon = "http://www.roblox.com/asset/?id=9956697825",
+
 							Duration = 2.5
 						})
 					end
@@ -6179,7 +6032,7 @@ spawn(function()
 end)
 
 local PlayerTab = PepsisWorld:CreateTab({
-    Name = "Player"
+    Name = "Stats"
 })
 
 local StatsSection = PlayerTab:CreateSection({
@@ -6370,122 +6223,6 @@ StatsSection:AddSlider({
 		return "Point : " .. tostring(value)
     end
 })
-
-local EspSection = PlayerTab:CreateSection({
-    Name = "Player Misc",
-	Side = "Right"
-})
-
-EspSection:AddToggle{
-    Name = "No Clip",
-    Flag = "No_clip",
-    Value = _G.Settings.No_clip,
-    Callback  = function(value)
-        _G.No_clip = value
-        _G.Settings.No_clip = value
-        saveSettings()
-    end
-}
-
-spawn(function()
-    pcall(function()
-        game:GetService("RunService").Stepped:Connect(function()
-            if _G.No_clip then
-                for _, v in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
-                    if v:IsA("BasePart") then
-                        v.CanCollide = false    
-                    end
-                end
-            end
-        end)
-    end)
-end)
-
-EspSection:AddToggle{
-    Name = "Infinit Energy",
-    Flag = "Infinit_Energy",
-    Value = _G.Settings.Infinit_Energy,
-    Callback  = function(value)
-        _G.Infinit_Energy = value
-        _G.Settings.Infinit_Energy = value
-        saveSettings()
-		InfinitEnergy()
-    end
-}
-
-EspSection:AddToggle{
-    Name = "Dodge No CoolDown",
-    Flag = "Dodge_No_CoolDown",
-    Value = _G.Settings.Dodge_No_CoolDown,
-    Callback  = function(value)
-        _G.Dodge_No_CoolDown = value
-        _G.Settings.Dodge_No_CoolDown = value
-        saveSettings()
-		DodgeNoCoolDown()
-    end
-}
-
-EspSection:AddToggle{
-    Name = "Infinit Ability",
-    Flag = "Infinit_Ability",
-    Value = _G.Settings.Infinit_Ability,
-    Callback  = function(value)
-        _G.Infinit_Ability = value
-        _G.Settings.Infinit_Ability = value
-        saveSettings()
-    end
-}
-
-spawn(function()
-	while wait() do
-		if _G.Infinit_Ability then
-			InfAbility()
-		end
-	end
-end)
-
-EspSection:AddToggle{
-    Name = "Infinit Sky Jump",
-    Flag = "Infinit_SkyJump",
-    Value = _G.Settings.Infinit_SkyJump,
-    Callback  = function(value)
-        _G.Infinit_SkyJump = value
-        _G.Settings.Infinit_SkyJump = value
-        saveSettings()
-		SkyJumpNoCoolDown()
-    end
-}
-
-EspSection:AddToggle{
-    Name = "Infinit Soru",
-    Flag = "Infinit_Soru",
-    Value = _G.Settings.Infinit_Soru,
-    Callback  = function(value)
-        _G.Infinit_Soru = value
-        _G.Settings.Infinit_Soru = value
-        saveSettings()
-		SoruNoCoolDown()
-    end
-}
-
-EspSection:AddToggle{
-    Name = "Infinit Range Observation Haki",
-    Flag = "Infinit_Range_Observation_Haki",
-    Value = _G.Settings.Infinit_Range_Observation_Haki,
-    Callback  = function(value)
-        _G.Infinit_Range_Observation_Haki = value
-        _G.Settings.Infinit_Range_Observation_Haki = value
-        saveSettings()
-    end
-}
-
-spawn(function()
-	while wait() do
-		if _G.Infinit_Range_Observation_Haki then
-			game.Players.LocalPlayer.VisionRadius.Value = math.huge
-		end
-	end
-end)
 
 
 local CombatTab = PepsisWorld:CreateTab({
@@ -6720,529 +6457,53 @@ spawn(function()
 		end)
 	end
 end)
-
-local TeleportTab = PepsisWorld:CreateTab({
-    Name = "Teleport"
-})
-
-local TeleportWorldSection = TeleportTab:CreateSection({
-    Name = "Teleport World",
-	Side = "Left"
-})
-
-TeleportWorldSection:AddButton({
-    Name = "Teleport to First World",
-    Callback = function()
-        game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("TravelMain")
-    end
-})
-
-TeleportWorldSection:AddButton({
-    Name = "Teleport to Second World",
-    Callback = function()
-        game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("TravelDressrosa")
-    end
-})
-
-TeleportWorldSection:AddButton({
-    Name = "Teleport to Third World",
-    Callback = function()
-		game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("TravelZou")
-    end
-})
-
-if World1 then
-	Island = {
-		"nil",
-		"WindMill",
-		"Marine",
-		"Middle Town",
-		"Jungle",
-		"Pirate Village",
-		"Desert",
-		"Snow Island",
-		"MarineFord",
-		"Colosseum",
-		"Sky Island 1",
-		"Sky Island 2",
-		"Sky Island 3",
-		"Prison",
-		"Magma Village",
-		"Under Water Island",
-		"Fountain City",
-		"Shank Room",
-		"Mob Island"
-		}
-elseif World2 then  
-	Island = {
-		"nil",
-		"The Cafe",
-		"Frist Spot",
-		"Dark Area",
-		"Flamingo Mansion",
-		"Flamingo Room",
-		"Green Zone",
-		"Factory",
-		"Colossuim",
-		"Zombie Island",
-		"Two Snow Mountain",
-		"Punk Hazard",
-		"Cursed Ship",
-		"Ice Castle",
-		"Forgotten Island",
-		"Ussop Island",
-		"Mini Sky Island"
-		}
-else
-	Island = {
-		"nil",
-		"Mansion",
-		"Port Town",
-		"Great Tree",
-		"Castle On The Sea",
-		"MiniSky", 
-		"Hydra Island",
-		"Floating Turtle",
-		"Haunted Castle",
-		"Ice Cream Island",
-		"Peanut Island",
-		"Cake Island"
-		}	
-end
-
-local TeleportIslandSection = TeleportTab:CreateSection({
-    Name = "Teleport Island",
-	Side = "Left"
-})
-
-TeleportIslandSection:AddDropdown({
-    Name = "Select Island",
-    Flag = "Select_Island",
-    List = Island,
-	Value = _G.Settings.Select_Island,
-    Callback = function(value)
-        _G.Select_Island = value
-		_G.Settings.Select_Island = value
-        saveSettings()
-    end
-})
-
-TeleportIslandSection:AddToggle({
-    Name = "Start Tween Island",
-    Flag = "Start_Tween_Island",
-    Value = _G.Settings.Start_Tween_Island,
-    Callback = function(value)
-        _G.Start_Tween_Island = value    
-		_G.Settings.Start_Tween_Island = value
-        saveSettings()
-		if _G.Start_Tween_Island == true then
-			repeat wait()
-				if _G.Select_Island == "WindMill" then
-					getgenv().ToTarget(CFrame.new(979.79895019531, 16.516613006592, 1429.0466308594))
-				elseif _G.Select_Island == "Marine" then
-					getgenv().ToTarget(CFrame.new(-2566.4296875, 6.8556680679321, 2045.2561035156))
-				elseif _G.Select_Island == "Middle Town" then
-					getgenv().ToTarget(CFrame.new(-690.33081054688, 15.09425163269, 1582.2380371094))
-				elseif _G.Select_Island == "Jungle" then
-					getgenv().ToTarget(CFrame.new(-1612.7957763672, 36.852081298828, 149.12843322754))
-				elseif _G.Select_Island == "Pirate Village" then
-					getgenv().ToTarget(CFrame.new(-1181.3093261719, 4.7514905929565, 3803.5456542969))
-				elseif _G.Select_Island == "Desert" then
-					getgenv().ToTarget(CFrame.new(944.15789794922, 20.919729232788, 4373.3002929688))
-				elseif _G.Select_Island == "Snow Island" then
-					getgenv().ToTarget(CFrame.new(1347.8067626953, 104.66806030273, -1319.7370605469))
-				elseif _G.Select_Island == "MarineFord" then
-					getgenv().ToTarget(CFrame.new(-4914.8212890625, 50.963626861572, 4281.0278320313))
-				elseif _G.Select_Island == "Colosseum" then
-					getgenv().ToTarget( CFrame.new(-1427.6203613281, 7.2881078720093, -2792.7722167969))
-				elseif _G.Select_Island == "Sky Island 1" then
-					getgenv().ToTarget(CFrame.new(-4869.1025390625, 733.46051025391, -2667.0180664063))
-				elseif _G.Select_Island == "Sky Island 2" then  
-					game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("requestEntrance",Vector3.new(-4607.82275, 872.54248, -1667.55688))
-				elseif _G.Select_Island == "Sky Island 3" then
-					game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("requestEntrance",Vector3.new(-7894.6176757813, 5547.1416015625, -380.29119873047))
-				elseif _G.Select_Island == "Prison" then
-					getgenv().ToTarget( CFrame.new(4875.330078125, 5.6519818305969, 734.85021972656))
-				elseif _G.Select_Island == "Magma Village" then
-					getgenv().ToTarget(CFrame.new(-5247.7163085938, 12.883934020996, 8504.96875))
-				elseif _G.Select_Island == "Under Water Island" then
-					game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("requestEntrance",Vector3.new(61163.8515625, 11.6796875, 1819.7841796875))
-				elseif _G.Select_Island == "Fountain City" then
-					getgenv().ToTarget(CFrame.new(5127.1284179688, 59.501365661621, 4105.4458007813))
-				elseif _G.Select_Island == "Shank Room" then
-					getgenv().ToTarget(CFrame.new(-1442.16553, 29.8788261, -28.3547478))
-				elseif _G.Select_Island == "Mob Island" then
-					getgenv().ToTarget(CFrame.new(-2850.20068, 7.39224768, 5354.99268))
-				elseif _G.Select_Island == "The Cafe" then
-					getgenv().ToTarget(CFrame.new(-380.47927856445, 77.220390319824, 255.82550048828))
-				elseif _G.Select_Island == "Frist Spot" then
-					getgenv().ToTarget(CFrame.new(-11.311455726624, 29.276733398438, 2771.5224609375))
-				elseif _G.Select_Island == "Dark Area" then
-					getgenv().ToTarget(CFrame.new(3780.0302734375, 22.652164459229, -3498.5859375))
-				elseif _G.Select_Island == "Flamingo Mansion" then
-					getgenv().ToTarget(CFrame.new(-483.73370361328, 332.0383605957, 595.32708740234))
-				elseif _G.Select_Island == "Flamingo Room" then
-					getgenv().ToTarget(CFrame.new(2284.4140625, 15.152037620544, 875.72534179688))
-				elseif _G.Select_Island == "Green Zone" then
-					getgenv().ToTarget( CFrame.new(-2448.5300292969, 73.016105651855, -3210.6306152344))
-				elseif _G.Select_Island == "Factory" then
-					getgenv().ToTarget(CFrame.new(424.12698364258, 211.16171264648, -427.54049682617))
-				elseif _G.Select_Island == "Colossuim" then
-					getgenv().ToTarget( CFrame.new(-1503.6224365234, 219.7956237793, 1369.3101806641))
-				elseif _G.Select_Island == "Zombie Island" then
-					getgenv().ToTarget(CFrame.new(-5622.033203125, 492.19604492188, -781.78552246094))
-				elseif _G.Select_Island == "Two Snow Mountain" then
-					getgenv().ToTarget(CFrame.new(753.14288330078, 408.23559570313, -5274.6147460938))
-				elseif _G.Select_Island == "Punk Hazard" then
-					getgenv().ToTarget(CFrame.new(-6127.654296875, 15.951762199402, -5040.2861328125))
-				elseif _G.Select_Island == "Cursed Ship" then
-					getgenv().ToTarget(CFrame.new(923.40197753906, 125.05712890625, 32885.875))
-				elseif _G.Select_Island == "Ice Castle" then
-					getgenv().ToTarget(CFrame.new(6148.4116210938, 294.38687133789, -6741.1166992188))
-				elseif _G.Select_Island == "Forgotten Island" then
-					getgenv().ToTarget(CFrame.new(-3032.7641601563, 317.89672851563, -10075.373046875))
-				elseif _G.Select_Island == "Ussop Island" then
-					getgenv().ToTarget(CFrame.new(4816.8618164063, 8.4599885940552, 2863.8195800781))
-				elseif _G.Select_Island == "Mini Sky Island" then
-					getgenv().ToTarget(CFrame.new(-288.74060058594, 49326.31640625, -35248.59375))
-				elseif _G.Select_Island == "Great Tree" then
-					getgenv().ToTarget(CFrame.new(2681.2736816406, 1682.8092041016, -7190.9853515625))
-				elseif _G.Select_Island == "Castle On The Sea" then
-					getgenv().ToTarget(CFrame.new(-5074.45556640625, 314.5155334472656, -2991.054443359375))
-				elseif _G.Select_Island == "MiniSky" then
-					getgenv().ToTarget(CFrame.new(-260.65557861328, 49325.8046875, -35253.5703125))
-				elseif _G.Select_Island == "Port Town" then
-					getgenv().ToTarget(CFrame.new(-290.7376708984375, 6.729952812194824, 5343.5537109375))
-				elseif _G.Select_Island == "Hydra Island" then
-					getgenv().ToTarget(CFrame.new(5228.8842773438, 604.23400878906, 345.0400390625))
-				elseif _G.Select_Island == "Floating Turtle" then
-					getgenv().ToTarget(CFrame.new(-13274.528320313, 531.82073974609, -7579.22265625))
-				elseif _G.Select_Island == "Mansion" then
-					game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("requestEntrance",Vector3.new(-12471.169921875, 374.94024658203, -7551.677734375))
-				elseif _G.Select_Island == "Haunted Castle" then
-					getgenv().ToTarget(CFrame.new(-9515.3720703125, 164.00624084473, 5786.0610351562))
-				elseif _G.Select_Island == "Ice Cream Island" then
-					getgenv().ToTarget(CFrame.new(-902.56817626953, 79.93204498291, -10988.84765625))
-				elseif _G.Select_Island == "Peanut Island" then
-					getgenv().ToTarget(CFrame.new(-2062.7475585938, 50.473892211914, -10232.568359375))
-				elseif _G.Select_Island == "Cake Island" then
-					getgenv().ToTarget(CFrame.new(-1884.7747802734375, 19.327526092529297, -11666.8974609375))
-				end
-			until not _G.Start_Tween_Island
-		end
-		StopTween(_G.Start_Tween_Island)
-    end
-})
-
-local DungeonTab = PepsisWorld:CreateTab({
-    Name = "Dungeon"
-})
-
-local MainDungeonSection = DungeonTab:CreateSection({
-    Name = "Main Dungeon",
-	Side = "Left"
-})
-
-Dungeon = {
-	"Flame", 
-	"Ice", 
-	"Quake", 
-	"Light",
-	"Dark",
-	"String",
-	"Rumble",
-	"Magma",
-	"Human: Buddha",
-	"Sand",
-	"Bird: Phoenix"
-}
-
-MainDungeonSection:AddDropdown({
-    Name = "Select Dungeon",
-    Flag = "Select_Dungeon",
-    List = Dungeon,
-	Value = _G.Settings.Select_Dungeon,
-    Callback = function(value)
-        _G.Select_Dungeon = value
-		_G.Settings.Select_Dungeon = value
-        saveSettings()
-    end
-})
-
-MainDungeonSection:AddToggle({
-    Name = "Auto Buy Chip Dungeon",
-    Flag = "Auto_Buy_Chips_Dungeon",
-    Value = _G.Settings.Auto_Buy_Chips_Dungeon,
-    Callback = function(value)
-        _G.Auto_Buy_Chips_Dungeon = value    
-		_G.Settings.Auto_Buy_Chips_Dungeon = value
-        saveSettings()
-    end
-})
-
-spawn(function()
-    while wait() do
-		if _G.Auto_Buy_Chips_Dungeon then
-			pcall(function()
-				local args = {
-					[1] = "RaidsNpc",
-					[2] = "Select",
-					[3] = _G.Select_Dungeon
-				}
-				
-				game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer(unpack(args))
-			end)
-		end
-    end
-end)
-
-MainDungeonSection:AddToggle({
-    Name = "Auto Start Dungeon",
-    Flag = "Auto_Start_Dungeon",
-    Value = _G.Settings.Auto_Start_Dungeon,
-    Callback = function(value)
-        _G.Auto_Start_Dungeon = value    
-		_G.Settings.Auto_Start_Dungeon = value
-        saveSettings()
-    end
-})
-
-spawn(function()
-    while wait() do
-		if _G.Auto_Start_Dungeon then
-			pcall(function()
-				if World2 then
-					if not game:GetService("Workspace")["_WorldOrigin"].Locations:FindFirstChild("Island 1") then
-						if game.Players.LocalPlayer.Backpack:FindFirstChild("Special Microchip") then 
-							fireclickdetector(game.Workspace.Map.CircleIsland.RaidSummon2.Button.Main.ClickDetector)
-						end
-					end
-				elseif World3 then
-					if not game:GetService("Workspace")["_WorldOrigin"].Locations:FindFirstChild("Island 1") then
-						if game.Players.LocalPlayer.Backpack:FindFirstChild("Special Microchip") then
-							fireclickdetector(game.Workspace.Map["Boat Castle"].RaidSummon2.Button.Main.ClickDetector)
-						end
-					end
-				end
-			end)
-		end
-    end
-end)
-
-MainDungeonSection:AddToggle({
-    Name = "Auto Next Island",
-    Flag = "Auto_Next_Island",
-    Value = _G.Settings.Auto_Next_Island,
-    Callback = function(value)
-        _G.Auto_Next_Island = value    
-		_G.Settings.Auto_Next_Island = value
-        saveSettings()
-    end
-})
-
-spawn(function()
-    while wait() do
-        if _G.Auto_Next_Island then
-			if not game.Players.LocalPlayer.PlayerGui.Main.Timer.Visible == false then
-				if game:GetService("Workspace")["_WorldOrigin"].Locations:FindFirstChild("Island 5") then
-					getgenv().ToTarget(game:GetService("Workspace")["_WorldOrigin"].Locations:FindFirstChild("Island 5").CFrame * CFrame.new(0,70,100))
-				elseif game:GetService("Workspace")["_WorldOrigin"].Locations:FindFirstChild("Island 4") then
-					getgenv().ToTarget(game:GetService("Workspace")["_WorldOrigin"].Locations:FindFirstChild("Island 4").CFrame * CFrame.new(0,70,100))
-				elseif game:GetService("Workspace")["_WorldOrigin"].Locations:FindFirstChild("Island 3") then
-					getgenv().ToTarget(game:GetService("Workspace")["_WorldOrigin"].Locations:FindFirstChild("Island 3").CFrame * CFrame.new(0,70,100))
-				elseif game:GetService("Workspace")["_WorldOrigin"].Locations:FindFirstChild("Island 2") then
-					getgenv().ToTarget(game:GetService("Workspace")["_WorldOrigin"].Locations:FindFirstChild("Island 2").CFrame * CFrame.new(0,70,100))
-				elseif game:GetService("Workspace")["_WorldOrigin"].Locations:FindFirstChild("Island 1") then
-					getgenv().ToTarget(game:GetService("Workspace")["_WorldOrigin"].Locations:FindFirstChild("Island 1").CFrame * CFrame.new(0,70,100))
-				end
-			end
-        end
-    end
-end)
-
-MainDungeonSection:AddToggle({
-    Name = "Kill Aura",
-    Flag = "Kill_Aura",
-    Value = _G.Settings.Kill_Aura,
-    Callback = function(value)
-        _G.Kill_Aura = value    
-		_G.Settings.Kill_Aura = value
-        saveSettings()
-    end
-})
-
-spawn(function()
-    while wait() do
-        if _G.Kill_Aura then
-            for i,v in pairs(game.Workspace.Enemies:GetDescendants()) do
-                if v:FindFirstChild("Humanoid") and v:FindFirstChild("HumanoidRootPart") and v.Humanoid.Health > 0 then
-                    pcall(function()
-                        repeat wait(.1)
-                            v.Humanoid.Health = 0
-                            v.HumanoidRootPart.CanCollide = false
-							sethiddenproperty(game.Players.LocalPlayer, "SimulationRadius", math.huge)
-                        until not _G.Kill_Aura  or not v.Parent or v.Humanoid.Health <= 0
-                    end)
-                end
-            end
-        end
-    end
-end)
-
-MainDungeonSection:AddToggle({
-    Name = "Auto Awake",
-    Flag = "Auto_Awake",
-    Value = _G.Settings.Auto_Awake,
-    Callback = function(value)
-        _G.Auto_Awake = value    
-		_G.Settings.Auto_Awake = value
-        saveSettings()
-    end
-})
-
-spawn(function()
-	while wait(.1) do
-		if _G.Auto_Awake then
-			pcall(function()
-				local args = {
-					[1] = "Awakener",
-					[2] = "Check"
-				}
-				
-				game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer(unpack(args))
-				local args = {
-					[1] = "Awakener",
-					[2] = "Awaken"
-				}
-				game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer(unpack(args))
-			end)
-		end
-	end
-end)
-
-local LawDungeonSection = DungeonTab:CreateSection({
-    Name = "Law Dungeon",
+local EspSection = CombatTab:CreateSection({
+    Name = "Misc",
 	Side = "Right"
 })
 
-LawDungeonSection:AddToggle({
-    Name = "Auto Buy Law Chip",
-    Flag = "Auto_Buy_Law_Chip",
-    Value = _G.Settings.Auto_Buy_Law_Chip,
-    Callback = function(value)
-        _G.Auto_Buy_Law_Chip = value    
-		_G.Settings.Auto_Buy_Law_Chip = value
+EspSection:AddToggle{
+    Name = "Infinit Energy",
+    Flag = "Infinit_Energy",
+    Value = _G.Settings.Infinit_Energy,
+    Callback  = function(value)
+        _G.Infinit_Energy = value
+        _G.Settings.Infinit_Energy = value
+        saveSettings()
+		InfinitEnergy()
+    end
+}
+
+EspSection:AddToggle{
+    Name = "Dodge No CoolDown",
+    Flag = "Dodge_No_CoolDown",
+    Value = _G.Settings.Dodge_No_CoolDown,
+    Callback  = function(value)
+        _G.Dodge_No_CoolDown = value
+        _G.Settings.Dodge_No_CoolDown = value
+        saveSettings()
+		DodgeNoCoolDown()
+    end
+}
+
+EspSection:AddToggle{
+    Name = "Infinit Ability",
+    Flag = "Infinit_Ability",
+    Value = _G.Settings.Infinit_Ability,
+    Callback  = function(value)
+        _G.Infinit_Ability = value
+        _G.Settings.Infinit_Ability = value
         saveSettings()
     end
-})
+}
 
 spawn(function()
 	while wait() do
-		if _G.Auto_Buy_Law_Chip then
-			pcall(function()
-				if game:GetService("Players").LocalPlayer.Backpack:FindFirstChild("Microchip") or game:GetService("Players").LocalPlayer.Character:FindFirstChild("Microchip") or game:GetService("Workspace").Enemies:FindFirstChild("Order [Lv. 1250] [Raid Boss]") or game:GetService("ReplicatedStorage"):FindFirstChild("Order [Lv. 1250] [Raid Boss]") then
-				
-				else
-					local args = {
-						[1] = "BlackbeardReward",
-						[2] = "Microchip",
-						[3] = "2"
-					}
-					game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer(unpack(args))
-				end
-			end)
+		if _G.Infinit_Ability then
+			InfAbility()
 		end
 	end
 end)
-
-LawDungeonSection:AddToggle({
-    Name = "Auto Start Law Dungeon",
-    Flag = "Auto_Start_Law_Dungeon",
-    Value = _G.Settings.Auto_Start_Law_Dungeon,
-    Callback = function(value)
-        _G.Auto_Start_Law_Dungeon = value    
-		_G.Settings.Auto_Start_Law_Dungeon = value
-        saveSettings()
-    end
-})
-
-spawn(function()
-	while wait() do
-		if _G.Auto_Start_Law_Dungeon then
-			pcall(function()
-				if game:GetService("Players").LocalPlayer.Character:FindFirstChild("Microchip") or game:GetService("Players").LocalPlayer.Backpack:FindFirstChild("Microchip") then
-					fireclickdetector(game:GetService("Workspace").Map.CircleIsland.RaidSummon.Button.Main.ClickDetector)
-				end
-			end)
-		end
-	end
-end)
-
-LawDungeonSection:AddToggle({
-    Name = "Auto Kill Law",
-    Flag = "Auto_Kill_Law",
-    Value = _G.Settings.Auto_Kill_Law,
-    Callback = function(value)
-        _G.Auto_Kill_Law = value    
-		_G.Settings.Auto_Kill_Law = value
-        saveSettings()
-    end
-})
-
-spawn(function()
-	while wait() do
-		if _G.Auto_Kill_Law then
-			pcall(function()
-				if game:GetService("ReplicatedStorage"):FindFirstChild("Order [Lv. 1250] [Raid Boss]") or game:GetService("Workspace").Enemies:FindFirstChild("Order [Lv. 1250] [Raid Boss]") then
-					for i,v in pairs(game.Workspace.Enemies:GetChildren()) do
-						if _G.Auto_Kill_Law and v.Name == "Order [Lv. 1250] [Raid Boss]" and v:FindFirstChild("HumanoidRootPart") and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
-							repeat task.wait()
-								AutoHaki()
-								EquipWeapon(_G.Select_Weapon_Law_Raid)
-								v.HumanoidRootPart.CanCollide = false
-								v.HumanoidRootPart.Size = Vector3.new(50,50,50)
-								getgenv().ToTarget(v.HumanoidRootPart.CFrame * CFrame.new(0,30,0))
-								game:GetService'VirtualUser':CaptureController()
-								game:GetService'VirtualUser':Button1Down(Vector2.new(1280, 672))
-							until not _G.Auto_Kill_Law or v.Humanoid.Health <= 0 or not v.Parent
-						end
-					end
-				end 
-			end)
-		end
-	end
-end)
-
-WeaponLaw = {}
-for i,v in pairs(game.Players.LocalPlayer.Backpack:GetChildren()) do  
-	if v:IsA("Tool") then
-		table.insert(WeaponLaw ,v.Name)
-	end
-end
-
-LawDungeonSection:AddDropdown({
-    Name = "Select Weapon",
-    Flag = "Select_Weapon",
-    List = WeaponLaw,
-	Value = _G.Settings.Select_Weapon_Law_Raid,
-    Callback = function(value)
-        _G.Select_Weapon_Law_Raid = value
-		_G.Settings.Select_Weapon_Law_Raid = value
-        saveSettings()
-    end
-})
-
-LawDungeonSection:AddButton({
-	Name = "Refresh Weapon",
-	Callback = function()
-		table.clear(WeaponLaw)
-		for i,v in pairs(game.Players.LocalPlayer.Backpack:GetChildren()) do  
-			if v:IsA("Tool") then
-				table.insert(WeaponLaw ,v.Name)
-			end
-		end
-	end
-})
 
 local ShopTab = PepsisWorld:CreateTab({
     Name = "Shop"
@@ -7714,6 +6975,526 @@ RacefragmentSection:AddButton({
     end
 })
 
+local Visuals = PepsisWorld:CreateTab({
+    Name = "Visuals"
+})
+
+local TeleportWorldSection = Visuals:CreateSection({
+    Name = "Teleport World",
+	Side = "Left"
+})
+
+TeleportWorldSection:AddButton({
+    Name = "Teleport to First World",
+    Callback = function()
+        game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("TravelMain")
+    end
+})
+
+TeleportWorldSection:AddButton({
+    Name = "Teleport to Second World",
+    Callback = function()
+        game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("TravelDressrosa")
+    end
+})
+
+TeleportWorldSection:AddButton({
+    Name = "Teleport to Third World",
+    Callback = function()
+		game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("TravelZou")
+    end
+})
+
+if World1 then
+	Island = {
+		"nil",
+		"WindMill",
+		"Marine",
+		"Middle Town",
+		"Jungle",
+		"Pirate Village",
+		"Desert",
+		"Snow Island",
+		"MarineFord",
+		"Colosseum",
+		"Sky Island 1",
+		"Sky Island 2",
+		"Sky Island 3",
+		"Prison",
+		"Magma Village",
+		"Under Water Island",
+		"Fountain City",
+		"Shank Room",
+		"Mob Island"
+		}
+elseif World2 then  
+	Island = {
+		"nil",
+		"The Cafe",
+		"Frist Spot",
+		"Dark Area",
+		"Flamingo Mansion",
+		"Flamingo Room",
+		"Green Zone",
+		"Factory",
+		"Colossuim",
+		"Zombie Island",
+		"Two Snow Mountain",
+		"Punk Hazard",
+		"Cursed Ship",
+		"Ice Castle",
+		"Forgotten Island",
+		"Ussop Island",
+		"Mini Sky Island"
+		}
+else
+	Island = {
+		"nil",
+		"Mansion",
+		"Port Town",
+		"Great Tree",
+		"Castle On The Sea",
+		"MiniSky", 
+		"Hydra Island",
+		"Floating Turtle",
+		"Haunted Castle",
+		"Ice Cream Island",
+		"Peanut Island",
+		"Cake Island"
+		}	
+end
+
+local TeleportIslandSection = Visuals:CreateSection({
+    Name = "Teleport Island",
+	Side = "Left"
+})
+
+TeleportIslandSection:AddDropdown({
+    Name = "Select Island",
+    Flag = "Select_Island",
+    List = Island,
+	Value = _G.Settings.Select_Island,
+    Callback = function(value)
+        _G.Select_Island = value
+		_G.Settings.Select_Island = value
+        saveSettings()
+    end
+})
+
+TeleportIslandSection:AddToggle({
+    Name = "Start Tween Island",
+    Flag = "Start_Tween_Island",
+    Value = _G.Settings.Start_Tween_Island,
+    Callback = function(value)
+        _G.Start_Tween_Island = value    
+		_G.Settings.Start_Tween_Island = value
+        saveSettings()
+		if _G.Start_Tween_Island == true then
+			repeat wait()
+				if _G.Select_Island == "WindMill" then
+					getgenv().ToTarget(CFrame.new(979.79895019531, 16.516613006592, 1429.0466308594))
+				elseif _G.Select_Island == "Marine" then
+					getgenv().ToTarget(CFrame.new(-2566.4296875, 6.8556680679321, 2045.2561035156))
+				elseif _G.Select_Island == "Middle Town" then
+					getgenv().ToTarget(CFrame.new(-690.33081054688, 15.09425163269, 1582.2380371094))
+				elseif _G.Select_Island == "Jungle" then
+					getgenv().ToTarget(CFrame.new(-1612.7957763672, 36.852081298828, 149.12843322754))
+				elseif _G.Select_Island == "Pirate Village" then
+					getgenv().ToTarget(CFrame.new(-1181.3093261719, 4.7514905929565, 3803.5456542969))
+				elseif _G.Select_Island == "Desert" then
+					getgenv().ToTarget(CFrame.new(944.15789794922, 20.919729232788, 4373.3002929688))
+				elseif _G.Select_Island == "Snow Island" then
+					getgenv().ToTarget(CFrame.new(1347.8067626953, 104.66806030273, -1319.7370605469))
+				elseif _G.Select_Island == "MarineFord" then
+					getgenv().ToTarget(CFrame.new(-4914.8212890625, 50.963626861572, 4281.0278320313))
+				elseif _G.Select_Island == "Colosseum" then
+					getgenv().ToTarget( CFrame.new(-1427.6203613281, 7.2881078720093, -2792.7722167969))
+				elseif _G.Select_Island == "Sky Island 1" then
+					getgenv().ToTarget(CFrame.new(-4869.1025390625, 733.46051025391, -2667.0180664063))
+				elseif _G.Select_Island == "Sky Island 2" then  
+					game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("requestEntrance",Vector3.new(-4607.82275, 872.54248, -1667.55688))
+				elseif _G.Select_Island == "Sky Island 3" then
+					game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("requestEntrance",Vector3.new(-7894.6176757813, 5547.1416015625, -380.29119873047))
+				elseif _G.Select_Island == "Prison" then
+					getgenv().ToTarget( CFrame.new(4875.330078125, 5.6519818305969, 734.85021972656))
+				elseif _G.Select_Island == "Magma Village" then
+					getgenv().ToTarget(CFrame.new(-5247.7163085938, 12.883934020996, 8504.96875))
+				elseif _G.Select_Island == "Under Water Island" then
+					game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("requestEntrance",Vector3.new(61163.8515625, 11.6796875, 1819.7841796875))
+				elseif _G.Select_Island == "Fountain City" then
+					getgenv().ToTarget(CFrame.new(5127.1284179688, 59.501365661621, 4105.4458007813))
+				elseif _G.Select_Island == "Shank Room" then
+					getgenv().ToTarget(CFrame.new(-1442.16553, 29.8788261, -28.3547478))
+				elseif _G.Select_Island == "Mob Island" then
+					getgenv().ToTarget(CFrame.new(-2850.20068, 7.39224768, 5354.99268))
+				elseif _G.Select_Island == "The Cafe" then
+					getgenv().ToTarget(CFrame.new(-380.47927856445, 77.220390319824, 255.82550048828))
+				elseif _G.Select_Island == "Frist Spot" then
+					getgenv().ToTarget(CFrame.new(-11.311455726624, 29.276733398438, 2771.5224609375))
+				elseif _G.Select_Island == "Dark Area" then
+					getgenv().ToTarget(CFrame.new(3780.0302734375, 22.652164459229, -3498.5859375))
+				elseif _G.Select_Island == "Flamingo Mansion" then
+					getgenv().ToTarget(CFrame.new(-483.73370361328, 332.0383605957, 595.32708740234))
+				elseif _G.Select_Island == "Flamingo Room" then
+					getgenv().ToTarget(CFrame.new(2284.4140625, 15.152037620544, 875.72534179688))
+				elseif _G.Select_Island == "Green Zone" then
+					getgenv().ToTarget( CFrame.new(-2448.5300292969, 73.016105651855, -3210.6306152344))
+				elseif _G.Select_Island == "Factory" then
+					getgenv().ToTarget(CFrame.new(424.12698364258, 211.16171264648, -427.54049682617))
+				elseif _G.Select_Island == "Colossuim" then
+					getgenv().ToTarget( CFrame.new(-1503.6224365234, 219.7956237793, 1369.3101806641))
+				elseif _G.Select_Island == "Zombie Island" then
+					getgenv().ToTarget(CFrame.new(-5622.033203125, 492.19604492188, -781.78552246094))
+				elseif _G.Select_Island == "Two Snow Mountain" then
+					getgenv().ToTarget(CFrame.new(753.14288330078, 408.23559570313, -5274.6147460938))
+				elseif _G.Select_Island == "Punk Hazard" then
+					getgenv().ToTarget(CFrame.new(-6127.654296875, 15.951762199402, -5040.2861328125))
+				elseif _G.Select_Island == "Cursed Ship" then
+					getgenv().ToTarget(CFrame.new(923.40197753906, 125.05712890625, 32885.875))
+				elseif _G.Select_Island == "Ice Castle" then
+					getgenv().ToTarget(CFrame.new(6148.4116210938, 294.38687133789, -6741.1166992188))
+				elseif _G.Select_Island == "Forgotten Island" then
+					getgenv().ToTarget(CFrame.new(-3032.7641601563, 317.89672851563, -10075.373046875))
+				elseif _G.Select_Island == "Ussop Island" then
+					getgenv().ToTarget(CFrame.new(4816.8618164063, 8.4599885940552, 2863.8195800781))
+				elseif _G.Select_Island == "Mini Sky Island" then
+					getgenv().ToTarget(CFrame.new(-288.74060058594, 49326.31640625, -35248.59375))
+				elseif _G.Select_Island == "Great Tree" then
+					getgenv().ToTarget(CFrame.new(2681.2736816406, 1682.8092041016, -7190.9853515625))
+				elseif _G.Select_Island == "Castle On The Sea" then
+					getgenv().ToTarget(CFrame.new(-5074.45556640625, 314.5155334472656, -2991.054443359375))
+				elseif _G.Select_Island == "MiniSky" then
+					getgenv().ToTarget(CFrame.new(-260.65557861328, 49325.8046875, -35253.5703125))
+				elseif _G.Select_Island == "Port Town" then
+					getgenv().ToTarget(CFrame.new(-290.7376708984375, 6.729952812194824, 5343.5537109375))
+				elseif _G.Select_Island == "Hydra Island" then
+					getgenv().ToTarget(CFrame.new(5228.8842773438, 604.23400878906, 345.0400390625))
+				elseif _G.Select_Island == "Floating Turtle" then
+					getgenv().ToTarget(CFrame.new(-13274.528320313, 531.82073974609, -7579.22265625))
+				elseif _G.Select_Island == "Mansion" then
+					game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("requestEntrance",Vector3.new(-12471.169921875, 374.94024658203, -7551.677734375))
+				elseif _G.Select_Island == "Haunted Castle" then
+					getgenv().ToTarget(CFrame.new(-9515.3720703125, 164.00624084473, 5786.0610351562))
+				elseif _G.Select_Island == "Ice Cream Island" then
+					getgenv().ToTarget(CFrame.new(-902.56817626953, 79.93204498291, -10988.84765625))
+				elseif _G.Select_Island == "Peanut Island" then
+					getgenv().ToTarget(CFrame.new(-2062.7475585938, 50.473892211914, -10232.568359375))
+				elseif _G.Select_Island == "Cake Island" then
+					getgenv().ToTarget(CFrame.new(-1884.7747802734375, 19.327526092529297, -11666.8974609375))
+				end
+			until not _G.Start_Tween_Island
+		end
+		StopTween(_G.Start_Tween_Island)
+    end
+})
+
+
+local MainDungeonSection = Visuals:CreateSection({
+    Name = "Main Dungeon",
+	Side = "Left"
+})
+
+Dungeon = {
+	"Flame", 
+	"Ice", 
+	"Quake", 
+	"Light",
+	"Dark",
+	"String",
+	"Rumble",
+	"Magma",
+	"Human: Buddha",
+	"Sand",
+	"Bird: Phoenix"
+}
+
+MainDungeonSection:AddDropdown({
+    Name = "Select Dungeon",
+    Flag = "Select_Dungeon",
+    List = Dungeon,
+	Value = _G.Settings.Select_Dungeon,
+    Callback = function(value)
+        _G.Select_Dungeon = value
+		_G.Settings.Select_Dungeon = value
+        saveSettings()
+    end
+})
+
+MainDungeonSection:AddToggle({
+    Name = "Auto Buy Chip Dungeon",
+    Flag = "Auto_Buy_Chips_Dungeon",
+    Value = _G.Settings.Auto_Buy_Chips_Dungeon,
+    Callback = function(value)
+        _G.Auto_Buy_Chips_Dungeon = value    
+		_G.Settings.Auto_Buy_Chips_Dungeon = value
+        saveSettings()
+    end
+})
+
+spawn(function()
+    while wait() do
+		if _G.Auto_Buy_Chips_Dungeon then
+			pcall(function()
+				local args = {
+					[1] = "RaidsNpc",
+					[2] = "Select",
+					[3] = _G.Select_Dungeon
+				}
+				
+				game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer(unpack(args))
+			end)
+		end
+    end
+end)
+
+MainDungeonSection:AddToggle({
+    Name = "Auto Start Dungeon",
+    Flag = "Auto_Start_Dungeon",
+    Value = _G.Settings.Auto_Start_Dungeon,
+    Callback = function(value)
+        _G.Auto_Start_Dungeon = value    
+		_G.Settings.Auto_Start_Dungeon = value
+        saveSettings()
+    end
+})
+
+spawn(function()
+    while wait() do
+		if _G.Auto_Start_Dungeon then
+			pcall(function()
+				if World2 then
+					if not game:GetService("Workspace")["_WorldOrigin"].Locations:FindFirstChild("Island 1") then
+						if game.Players.LocalPlayer.Backpack:FindFirstChild("Special Microchip") then 
+							fireclickdetector(game.Workspace.Map.CircleIsland.RaidSummon2.Button.Main.ClickDetector)
+						end
+					end
+				elseif World3 then
+					if not game:GetService("Workspace")["_WorldOrigin"].Locations:FindFirstChild("Island 1") then
+						if game.Players.LocalPlayer.Backpack:FindFirstChild("Special Microchip") then
+							fireclickdetector(game.Workspace.Map["Boat Castle"].RaidSummon2.Button.Main.ClickDetector)
+						end
+					end
+				end
+			end)
+		end
+    end
+end)
+
+MainDungeonSection:AddToggle({
+    Name = "Auto Next Island",
+    Flag = "Auto_Next_Island",
+    Value = _G.Settings.Auto_Next_Island,
+    Callback = function(value)
+        _G.Auto_Next_Island = value    
+		_G.Settings.Auto_Next_Island = value
+        saveSettings()
+    end
+})
+
+spawn(function()
+    while wait() do
+        if _G.Auto_Next_Island then
+			if not game.Players.LocalPlayer.PlayerGui.Main.Timer.Visible == false then
+				if game:GetService("Workspace")["_WorldOrigin"].Locations:FindFirstChild("Island 5") then
+					getgenv().ToTarget(game:GetService("Workspace")["_WorldOrigin"].Locations:FindFirstChild("Island 5").CFrame * CFrame.new(0,70,100))
+				elseif game:GetService("Workspace")["_WorldOrigin"].Locations:FindFirstChild("Island 4") then
+					getgenv().ToTarget(game:GetService("Workspace")["_WorldOrigin"].Locations:FindFirstChild("Island 4").CFrame * CFrame.new(0,70,100))
+				elseif game:GetService("Workspace")["_WorldOrigin"].Locations:FindFirstChild("Island 3") then
+					getgenv().ToTarget(game:GetService("Workspace")["_WorldOrigin"].Locations:FindFirstChild("Island 3").CFrame * CFrame.new(0,70,100))
+				elseif game:GetService("Workspace")["_WorldOrigin"].Locations:FindFirstChild("Island 2") then
+					getgenv().ToTarget(game:GetService("Workspace")["_WorldOrigin"].Locations:FindFirstChild("Island 2").CFrame * CFrame.new(0,70,100))
+				elseif game:GetService("Workspace")["_WorldOrigin"].Locations:FindFirstChild("Island 1") then
+					getgenv().ToTarget(game:GetService("Workspace")["_WorldOrigin"].Locations:FindFirstChild("Island 1").CFrame * CFrame.new(0,70,100))
+				end
+			end
+        end
+    end
+end)
+
+MainDungeonSection:AddToggle({
+    Name = "Kill Aura",
+    Flag = "Kill_Aura",
+    Value = _G.Settings.Kill_Aura,
+    Callback = function(value)
+        _G.Kill_Aura = value    
+		_G.Settings.Kill_Aura = value
+        saveSettings()
+    end
+})
+
+spawn(function()
+    while wait() do
+        if _G.Kill_Aura then
+            for i,v in pairs(game.Workspace.Enemies:GetDescendants()) do
+                if v:FindFirstChild("Humanoid") and v:FindFirstChild("HumanoidRootPart") and v.Humanoid.Health > 0 then
+                    pcall(function()
+                        repeat wait(.1)
+                            v.Humanoid.Health = 0
+                            v.HumanoidRootPart.CanCollide = false
+							sethiddenproperty(game.Players.LocalPlayer, "SimulationRadius", math.huge)
+                        until not _G.Kill_Aura  or not v.Parent or v.Humanoid.Health <= 0
+                    end)
+                end
+            end
+        end
+    end
+end)
+
+MainDungeonSection:AddToggle({
+    Name = "Auto Awake",
+    Flag = "Auto_Awake",
+    Value = _G.Settings.Auto_Awake,
+    Callback = function(value)
+        _G.Auto_Awake = value    
+		_G.Settings.Auto_Awake = value
+        saveSettings()
+    end
+})
+
+spawn(function()
+	while wait(.1) do
+		if _G.Auto_Awake then
+			pcall(function()
+				local args = {
+					[1] = "Awakener",
+					[2] = "Check"
+				}
+				
+				game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer(unpack(args))
+				local args = {
+					[1] = "Awakener",
+					[2] = "Awaken"
+				}
+				game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer(unpack(args))
+			end)
+		end
+	end
+end)
+
+local LawDungeonSection = Visuals:CreateSection({
+    Name = "Law Dungeon",
+	Side = "Right"
+})
+
+LawDungeonSection:AddToggle({
+    Name = "Auto Buy Law Chip",
+    Flag = "Auto_Buy_Law_Chip",
+    Value = _G.Settings.Auto_Buy_Law_Chip,
+    Callback = function(value)
+        _G.Auto_Buy_Law_Chip = value    
+		_G.Settings.Auto_Buy_Law_Chip = value
+        saveSettings()
+    end
+})
+
+spawn(function()
+	while wait() do
+		if _G.Auto_Buy_Law_Chip then
+			pcall(function()
+				if game:GetService("Players").LocalPlayer.Backpack:FindFirstChild("Microchip") or game:GetService("Players").LocalPlayer.Character:FindFirstChild("Microchip") or game:GetService("Workspace").Enemies:FindFirstChild("Order [Lv. 1250] [Raid Boss]") or game:GetService("ReplicatedStorage"):FindFirstChild("Order [Lv. 1250] [Raid Boss]") then
+				
+				else
+					local args = {
+						[1] = "BlackbeardReward",
+						[2] = "Microchip",
+						[3] = "2"
+					}
+					game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer(unpack(args))
+				end
+			end)
+		end
+	end
+end)
+
+LawDungeonSection:AddToggle({
+    Name = "Auto Start Law Dungeon",
+    Flag = "Auto_Start_Law_Dungeon",
+    Value = _G.Settings.Auto_Start_Law_Dungeon,
+    Callback = function(value)
+        _G.Auto_Start_Law_Dungeon = value    
+		_G.Settings.Auto_Start_Law_Dungeon = value
+        saveSettings()
+    end
+})
+
+spawn(function()
+	while wait() do
+		if _G.Auto_Start_Law_Dungeon then
+			pcall(function()
+				if game:GetService("Players").LocalPlayer.Character:FindFirstChild("Microchip") or game:GetService("Players").LocalPlayer.Backpack:FindFirstChild("Microchip") then
+					fireclickdetector(game:GetService("Workspace").Map.CircleIsland.RaidSummon.Button.Main.ClickDetector)
+				end
+			end)
+		end
+	end
+end)
+
+LawDungeonSection:AddToggle({
+    Name = "Auto Kill Law",
+    Flag = "Auto_Kill_Law",
+    Value = _G.Settings.Auto_Kill_Law,
+    Callback = function(value)
+        _G.Auto_Kill_Law = value    
+		_G.Settings.Auto_Kill_Law = value
+        saveSettings()
+    end
+})
+
+spawn(function()
+	while wait() do
+		if _G.Auto_Kill_Law then
+			pcall(function()
+				if game:GetService("ReplicatedStorage"):FindFirstChild("Order [Lv. 1250] [Raid Boss]") or game:GetService("Workspace").Enemies:FindFirstChild("Order [Lv. 1250] [Raid Boss]") then
+					for i,v in pairs(game.Workspace.Enemies:GetChildren()) do
+						if _G.Auto_Kill_Law and v.Name == "Order [Lv. 1250] [Raid Boss]" and v:FindFirstChild("HumanoidRootPart") and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
+							repeat task.wait()
+								AutoHaki()
+								EquipWeapon(_G.Select_Weapon_Law_Raid)
+								v.HumanoidRootPart.CanCollide = false
+								v.HumanoidRootPart.Size = Vector3.new(50,50,50)
+								getgenv().ToTarget(v.HumanoidRootPart.CFrame * CFrame.new(0,30,0))
+								game:GetService'VirtualUser':CaptureController()
+								game:GetService'VirtualUser':Button1Down(Vector2.new(1280, 672))
+							until not _G.Auto_Kill_Law or v.Humanoid.Health <= 0 or not v.Parent
+						end
+					end
+				end 
+			end)
+		end
+	end
+end)
+
+WeaponLaw = {}
+for i,v in pairs(game.Players.LocalPlayer.Backpack:GetChildren()) do  
+	if v:IsA("Tool") then
+		table.insert(WeaponLaw ,v.Name)
+	end
+end
+
+LawDungeonSection:AddDropdown({
+    Name = "Select Weapon",
+    Flag = "Select_Weapon",
+    List = WeaponLaw,
+	Value = _G.Settings.Select_Weapon_Law_Raid,
+    Callback = function(value)
+        _G.Select_Weapon_Law_Raid = value
+		_G.Settings.Select_Weapon_Law_Raid = value
+        saveSettings()
+    end
+})
+
+LawDungeonSection:AddButton({
+	Name = "Refresh Weapon",
+	Callback = function()
+		table.clear(WeaponLaw)
+		for i,v in pairs(game.Players.LocalPlayer.Backpack:GetChildren()) do  
+			if v:IsA("Tool") then
+				table.insert(WeaponLaw ,v.Name)
+			end
+		end
+	end
+})
+
 local MiscTab = PepsisWorld:CreateTab({
     Name = "Misc"
 })
@@ -7863,176 +7644,6 @@ MainMiscSection:AddToggle({
     end
 })
 
-MainMiscSection:AddToggle({
-    Name = "Auto confetti",
-    Flag = "Auto_confetti",
-    Value = _G.Settings.Auto_confetti,
-    Callback = function(value)
-        _G.Auto_confetti = value
-		_G.Settings.Auto_confetti = value
-		saveSettings()
-		if _G.Auto_confetti then
-			function TP(Point)
-				local Ply = game.Players.LocalPlayer
-				local Char = Ply.Character
-				repeat
-					Char.Humanoid:ChangeState(15)
-					Char.HumanoidRootPart.CFrame = Point
-					wait()
-					Char.HumanoidRootPart.CFrame = Point
-				until (Char.HumanoidRootPart.Position - Point.Position).Magnitude <= 20
-			end
-			
-			spawn(function()
-				while task.wait() do
-					pcall(function()
-						if _G.AutoConfetti then
-							for i,v in pairs(game.Workspace.NPCs:GetChildren()) do
-								game:GetService("ReplicatedStorage").Remotes.Celebration:InvokeServer('TalkNpc',workspace.NPCs[v.Name])
-							end
-						end
-					end)
-				end
-			end)
-			
-			spawn(function()
-				while task.wait() do
-					pcall(function()
-						if _G.AutoConfetti then
-							TP(CFrame.new(-259.380126953125, 6.764979839324951, 5254.09912109375))
-						--	wait(.5)
-							TP(CFrame.new(-1932.3507080078125, 13.824933052062988, -11636.8515625))
-						--	wait(.5)
-							TP(CFrame.new(-929.170166015625, 7.802646160125732, -10826.3876953125))
-						--	wait(.5)
-							TP(CFrame.new(497.3184509277344, 24.76936149597168, -12418.55859375))
-						--	wait(.5)
-							TP(CFrame.new(-47.42597961425781, 16.97955322265625, -11992.779296875))
-						--	wait(.5)
-							TP(CFrame.new(2245.78271484375, 12.776296615600586, -6353.974609375))
-							--wait(.5)
-							TP(CFrame.new(-9515.0009765625, 142.1398468017578, 5534.05029296875))
-						--	wait(.5)
-							TP(CFrame.new(-9512.8896484375, 21.139892578125, 4641.02978515625))
-						--	wait(.5)
-							TP(CFrame.new(4732.6533203125, 51.589698791503906, -1414.252197265625))
-						--	wait(.5)
-							TP(CFrame.new(5277.3388671875, 602.0785522460938, 363.35223388671875))
-							--wait(.5)
-							TP(CFrame.new(3371.987060546875, 38.98302459716797, 1593.1405029296875))
-						--	wait(.5)
-							TP(CFrame.new(-2045.0103759765625, 38.138248443603516, -10041.935546875))
-							--wait(.5)
-							TP(CFrame.new(-5116.79931640625, 314.550537109375, -2964.70068359375))
-						--	wait(.5)
-							TP(CFrame.new(-4598.1025390625, 16.455780029296875, -2705.09619140625))
-						--	wait(.5)
-							TP(CFrame.new(-6069.4306640625, 16.455780029296875, -2160.60205078125))
-						--	wait(.5)
-							TP(CFrame.new(-11385.6767578125, 331.75823974609375, -10405.916015625))
-						--	wait(.5)
-							TP(CFrame.new(-9603.1591796875, 46.55657196044922, -8365.3828125))
-						--	wait(.5)
-							TP(CFrame.new(-12545.2353515625, 337.20330810546875, -7454.07470703125))
-						--	wait(.5)
-						end
-					end)
-				end
-			end)
-			spawn(function()
-				pcall(function()
-					local vu = game:GetService("VirtualUser")
-					game:GetService("Players").LocalPlayer.Idled:connect(function()
-						vu:Button2Down(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
-						wait(1)
-						vu:Button2Up(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
-					end)
-				end)
-			end)
-			_G.AutoConfetti = true -- false for desable auto confetti
-		else
-			function TP(Point)
-				local Ply = game.Players.LocalPlayer
-				local Char = Ply.Character
-				repeat
-					Char.Humanoid:ChangeState(15)
-					Char.HumanoidRootPart.CFrame = Point
-					wait()
-					Char.HumanoidRootPart.CFrame = Point
-				until (Char.HumanoidRootPart.Position - Point.Position).Magnitude <= 20
-			end
-			
-			spawn(function()
-				while task.wait() do
-					pcall(function()
-						if _G.AutoConfetti then
-							for i,v in pairs(game.Workspace.NPCs:GetChildren()) do
-								game:GetService("ReplicatedStorage").Remotes.Celebration:InvokeServer('TalkNpc',workspace.NPCs[v.Name])
-							end
-						end
-					end)
-				end
-			end)
-			
-			spawn(function()
-				while task.wait() do
-					pcall(function()
-						if _G.AutoConfetti then
-							TP(CFrame.new(-259.380126953125, 6.764979839324951, 5254.09912109375))
-						--	wait(.5)
-							TP(CFrame.new(-1932.3507080078125, 13.824933052062988, -11636.8515625))
-						--	wait(.5)
-							TP(CFrame.new(-929.170166015625, 7.802646160125732, -10826.3876953125))
-						--	wait(.5)
-							TP(CFrame.new(497.3184509277344, 24.76936149597168, -12418.55859375))
-						--	wait(.5)
-							TP(CFrame.new(-47.42597961425781, 16.97955322265625, -11992.779296875))
-						--	wait(.5)
-							TP(CFrame.new(2245.78271484375, 12.776296615600586, -6353.974609375))
-							--wait(.5)
-							TP(CFrame.new(-9515.0009765625, 142.1398468017578, 5534.05029296875))
-						--	wait(.5)
-							TP(CFrame.new(-9512.8896484375, 21.139892578125, 4641.02978515625))
-						--	wait(.5)
-							TP(CFrame.new(4732.6533203125, 51.589698791503906, -1414.252197265625))
-						--	wait(.5)
-							TP(CFrame.new(5277.3388671875, 602.0785522460938, 363.35223388671875))
-							--wait(.5)
-							TP(CFrame.new(3371.987060546875, 38.98302459716797, 1593.1405029296875))
-						--	wait(.5)
-							TP(CFrame.new(-2045.0103759765625, 38.138248443603516, -10041.935546875))
-							--wait(.5)
-							TP(CFrame.new(-5116.79931640625, 314.550537109375, -2964.70068359375))
-						--	wait(.5)
-							TP(CFrame.new(-4598.1025390625, 16.455780029296875, -2705.09619140625))
-						--	wait(.5)
-							TP(CFrame.new(-6069.4306640625, 16.455780029296875, -2160.60205078125))
-						--	wait(.5)
-							TP(CFrame.new(-11385.6767578125, 331.75823974609375, -10405.916015625))
-						--	wait(.5)
-							TP(CFrame.new(-9603.1591796875, 46.55657196044922, -8365.3828125))
-						--	wait(.5)
-							TP(CFrame.new(-12545.2353515625, 337.20330810546875, -7454.07470703125))
-						--	wait(.5)
-						end
-					end)
-				end
-			end)
-			spawn(function()
-				pcall(function()
-					local vu = game:GetService("VirtualUser")
-					game:GetService("Players").LocalPlayer.Idled:connect(function()
-						vu:Button2Down(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
-						wait(1)
-						vu:Button2Up(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
-					end)
-				end)
-			end)
-			_G.AutoConfetti = false -- false for desable auto confetti
-
-		end
-    end
-})
 
 MainMiscSection:AddButton({
     Name = "FPS Boost",
@@ -8160,3 +7771,65 @@ if _G.FPS_Boost then
 		end
 	})
 	
+	local Setting = PepsisWorld:CreateTab({
+		Name = "Setting"
+	})
+	
+	local Setting = Setting:CreateSection({
+		Name = "Main",
+		Side = "Left"
+	})
+	
+	Setting:AddSlider({
+		Name = "Select Distance",
+		Flag = "Select_Distance",
+		Value = _G.Settings.Select_Distance,
+		Min = 1,
+		Max = 100,
+		Textbox = true,
+		Format = function(value)
+			_G.Select_Distance = value
+			_G.Settings.Select_Distance = value
+			saveSettings()
+			return "Distance : " .. tostring(value)
+		end
+	})
+	
+	Setting:AddSlider({
+		Name = "Health For Mastery Farm",
+		Flag = "Health_For_Mastery_Farm",
+		Value = _G.Settings.Select_Health,
+		Min = 1,
+		Max = 100,
+		Textbox = true,
+		Format = function(value)
+			_G.Select_Health = value
+			_G.Settings.Select_Health = value
+			saveSettings()
+			return "Health : ".. tostring(value).." [For Mastery Farm]"
+		end
+	})
+	
+	Setting:AddDropdown({
+		Name = "Select Mode Farm",
+		Flag = "Select_Mode_Farm",
+		Value = _G.Settings.Select_Mode_Farm,
+		List = {"Normal Mode","Fast Mode","No Quest","Fruit Mastery Mode","Gun Mastery Mode"},
+		Callback = function(value)
+			_G.Select_Mode_Farm = value
+			_G.Settings.Select_Mode_Farm = value
+			saveSettings()
+		end
+	})
+	
+	Setting:AddDropdown({
+		Name = "Select Mode Bring Mob",
+		Flag = "Select_Mode_Bring_Mob",
+		Value = _G.Settings.Select_Bring_Mob_Mode,
+		List = {"Bring Mob [Normal]","Bring Mob [Extra]"},
+		Callback = function(value)
+			_G.Select_Bring_Mob_Mode = value
+			_G.Settings.Select_Bring_Mob_Mode = value
+			saveSettings()
+		end
+	})
