@@ -1094,86 +1094,68 @@ function EquipWeapon(ToolSe)
 	end
 end
 
-getgenv().ToTarget = function(p)
-    task.spawn(function()
-        pcall(function()
-            if game:GetService("Players").LocalPlayer:DistanceFromCharacter(p.Position) <= 250 then 
-                game:GetService("Players").LocalPlayer.Character.HumanoidRootPart.CFrame = p
-            elseif not game.Players.LocalPlayer.Character:FindFirstChild("Root")then 
-                local K = Instance.new("Part",game.Players.LocalPlayer.Character)
-                K.Size = Vector3.new(1,0.5,1)
-                K.Name = "Root"
-                K.Anchored = true
-                K.Transparency = 1
-                K.CanCollide = false
-                K.CFrame = game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame * CFrame.new(0,20,0)
-            end
-            local U = (game.Players.LocalPlayer.Character.HumanoidRootPart.Position-p.Position).Magnitude
-            local z = game:service("TweenService")
-            local B = TweenInfo.new((p.Position-game.Players.LocalPlayer.Character.Root.Position).Magnitude/300,Enum.EasingStyle.Linear)
-            local S,g = pcall(function()
-            local q = z:Create(game.Players.LocalPlayer.Character.Root,B,{CFrame = p})
-            q:Play()
-        end)
-        if not S then 
-            return g
-        end
-        game.Players.LocalPlayer.Character.Root.CFrame = game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame
-            if S and game.Players.LocalPlayer.Character:FindFirstChild("Root") then 
-                pcall(function()
-                    if (game.Players.LocalPlayer.Character.HumanoidRootPart.Position-p.Position).Magnitude >= 20 then 
-                        spawn(function()
-                            pcall(function()
-                                if (game.Players.LocalPlayer.Character.Root.Position-game.Players.LocalPlayer.Character.HumanoidRootPart.Position).Magnitude > 150 then 
-                                    game.Players.LocalPlayer.Character.Root.CFrame = game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame
-                                else 
-                                    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame=game.Players.LocalPlayer.Character.Root.CFrame
-                                end
-                            end)
-                        end)
-                    elseif (game.Players.LocalPlayer.Character.HumanoidRootPart.Position-p.Position).Magnitude >= 10 and(game.Players.LocalPlayer.Character.HumanoidRootPart.Position-p.Position).Magnitude < 20 then 
-                        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = p
-                    elseif (game.Players.LocalPlayer.Character.HumanoidRootPart.Position-p.Position).Magnitude < 10 then 
-                        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = p
-                    end
-                end)
-            end
-	    end)
-    end)
-end
 
-function StopTween(target)
-	if not target then
-		_G.StopTween = true
-		wait()
-		getgenv().ToTarget(game:GetService("Players").LocalPlayer.Character.HumanoidRootPart.CFrame)
-		wait()
-		if game:GetService("Players").LocalPlayer.Character.HumanoidRootPart:FindFirstChild("BodyClip") then
-			game:GetService("Players").LocalPlayer.Character.HumanoidRootPart:FindFirstChild("BodyClip"):Destroy()
+getgenv().ToTarget=function(p)
+		Distance = (p.Position - game.Players.LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
+		if game.Players.LocalPlayer.Character.Humanoid.Sit == true then game.Players.LocalPlayer.Character.Humanoid.Sit = false end
+		pcall(function() tween = game:GetService("TweenService"):Create(game.Players.LocalPlayer.Character.HumanoidRootPart,TweenInfo.new(Distance/210, Enum.EasingStyle.Linear),{CFrame = p}) end)
+		tween:Play()
+		if Distance <= 250 then
+			tween:Cancel()
+			game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = p
 		end
-		_G.StopTween = false
+		if _G.StopTween == true then
+			wait()
+			topos(game:GetService("Players").LocalPlayer.Character.HumanoidRootPart.CFrame)
+			wait()
+			if game:GetService("Players").LocalPlayer.Character.HumanoidRootPart:FindFirstChild("BodyClip") then
+				game:GetService("Players").LocalPlayer.Character.HumanoidRootPart:FindFirstChild("BodyClip"):Destroy()
+			end
+			_G.StopTween = true
+			_G.Clip = false
+		end
+	end
+	
+	function GetDistance(target)
+		return math.floor((target.Position - game.Players.LocalPlayer.Character.HumanoidRootPart.Position).Magnitude)
+	end
+	
+	function TP1(p)
+	Distance = (p.Position - game.Players.LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
+	if Distance < 360 then
+		Speed = 1200
+	elseif Distance < 1000 then
+		Speed = 360
+	elseif Distance < 360 then
+		Speed = 1200
+	elseif Distance >= 1000 then
+		Speed = 360
+	end
+	game:GetService("TweenService"):Create(
+		game.Players.LocalPlayer.Character.HumanoidRootPart,
+		TweenInfo.new(Distance/Speed, Enum.EasingStyle.Linear),
+		{CFrame = p}
+	):Play()
+	end
+	
+	function TP(p)
+		Distance = (p.Position - game:GetService("Players").LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
+		if Distance < 250 then
+			Speed = 600
+		elseif Distance >= 1000 then
+			Speed = 200
+		end
+		game:GetService("TweenService"):Create(
+			game:GetService("Players").LocalPlayer.Character.HumanoidRootPart,
+			TweenInfo.new(Distance/Speed, Enum.EasingStyle.Linear),
+			{CFrame = p}
+		):Play()
+		_G.Clip = true
+		wait(Distance/Speed)
 		_G.Clip = false
 	end
-end
-
 function UseCode(Text)
 	game:GetService("ReplicatedStorage").Remotes.Redeem:InvokeServer(Text)
-end
-
-function toTarget(targetPos, targetCFrame)
-    local tweenfunc = {}
-    local tween_s = game:service"TweenService"
-    local info = TweenInfo.new((targetPos - game:GetService("Players").LocalPlayer.Character:WaitForChild("HumanoidRootPart").Position).Magnitude/300, Enum.EasingStyle.Linear)
-    local tween = tween_s:Create(game:GetService("Players").LocalPlayer.Character["HumanoidRootPart"], info, {CFrame = targetCFrame * CFrame.fromAxisAngle(Vector3.new(1,0,0), math.rad(0))})
-    tween:Play()
-
-    function tweenfunc:Stop()
-        tween:Cancel()
-        return tween
-    end
-
-    if not tween then return tween end
-    return tweenfunc
 end
 
 local plr = game.Players.LocalPlayer
