@@ -1580,7 +1580,7 @@ local library = {
 	},
 	colors = {
 		main = Color3.fromRGB(0, 255, 247),
-		background = Color3.fromRGB(28, 28, 28),
+		background = Color3.fromRGB(26, 26, 26),
 		outerBorder = Color3.fromRGB(15, 15, 15),
 		innerBorder = Color3.fromRGB(2, 95, 91),
 		topGradient = Color3.fromRGB(35, 35, 35),
@@ -8550,36 +8550,103 @@ SettingSection:AddToggle{
     end
 }
 
-local CameraShaker = require(game.ReplicatedStorage.Util.CameraShaker)
-for i,v in pairs(getreg()) do
-    if typeof(v) == "function" and getfenv(v).script == game:GetService("Players").LocalPlayer.PlayerScripts.CombatFramework then
-        for x,w in pairs(debug.getupvalues(v)) do
-             if typeof(w) == "table" then
-                spawn(function()
-                    game:GetService("RunService").RenderStepped:Connect(function()
-                        if _G.Fast_Attack then
-                            pcall(function()
-								if game.Players.LocalPlayer.Character:FindFirstChild("Combat") or game.Players.LocalPlayer.Character:FindFirstChild("Black Leg") or game.Players.LocalPlayer.Character:FindFirstChild("Electro") or game.Players.LocalPlayer.Character:FindFirstChild("Fishman Karate") or game.Players.LocalPlayer.Character:FindFirstChild("Dragon Claw") or game.Players.LocalPlayer.Character:FindFirstChild("Superhuman") or game.Players.LocalPlayer.Character:FindFirstChild("Sharkman Karate") then
-									w.activeController.increment = 3
-								else
-									w.activeController.increment = 4
-								end             
-                                CameraShaker:Stop()
-                                w.activeController.timeToNextAttack = -(math.huge^math.huge^math.huge)
-                                w.activeController.attacking = false
-								w.activeController.timeToNextBlock = 0
-                                w.activeController.blocking = false                            
-                                w.activeController.hitboxMagnitude = 50
-    		                    w.activeController.humanoid.AutoRotate = true
-    	                      	w.activeController.focusStart = 0
-                            end)
-                        end
-                    end)
-                end)
-            end
-        end
-    end
+local CombatFramework = require(game:GetService("Players").LocalPlayer.PlayerScripts:WaitForChild("CombatFramework"))
+local CombatFrameworkR = getupvalues(CombatFramework)[2]
+local RigController = require(game:GetService("Players")["LocalPlayer"].PlayerScripts.CombatFramework.RigController)
+local RigControllerR = getupvalues(RigController)[2]
+local realbhit = require(game.ReplicatedStorage.CombatFramework.RigLib)
+local cooldownfastattack = tick()
+
+function CurrentWeapon()
+	local ac = CombatFrameworkR.activeController
+	local ret = ac.blades[1]
+	if not ret then return game.Players.LocalPlayer.Character:FindFirstChildOfClass("Tool").Name end
+	pcall(function()
+		while ret.Parent~=game.Players.LocalPlayer.Character do ret=ret.Parent end
+	end)
+	if not ret then return game.Players.LocalPlayer.Character:FindFirstChildOfClass("Tool").Name end
+	return ret
 end
+
+function getAllBladeHitsPlayers(Sizes)
+	local Hits = {}
+	local Client = game.Players.LocalPlayer
+	local Characters = game:GetService("Workspace").Characters:GetChildren()
+	for i=1,#Characters do local v = Characters[i]
+		local Human = v:FindFirstChildOfClass("Humanoid")
+		if v.Name ~= game.Players.LocalPlayer.Name and Human and Human.RootPart and Human.Health > 0 and Client:DistanceFromCharacter(Human.RootPart.Position) < Sizes+5 then
+			table.insert(Hits,Human.RootPart)
+		end
+	end
+	return Hits
+end
+
+function getAllBladeHits(Sizes)
+	local Hits = {}
+	local Client = game.Players.LocalPlayer
+	local Enemies = game:GetService("Workspace").Enemies:GetChildren()
+	for i=1,#Enemies do local v = Enemies[i]
+		local Human = v:FindFirstChildOfClass("Humanoid")
+		if Human and Human.RootPart and Human.Health > 0 and Client:DistanceFromCharacter(Human.RootPart.Position) < Sizes+5 then
+			table.insert(Hits,Human.RootPart)
+		end
+	end
+	return Hits
+end
+
+function AttackFunction()
+	local ac = CombatFrameworkR.activeController
+	if ac and ac.equipped then
+		for indexincrement = 1, 1 do
+			local bladehit = getAllBladeHits(30)
+			if #bladehit > 0 then
+				local AcAttack8 = debug.getupvalue(ac.attack, 5)
+				local AcAttack9 = debug.getupvalue(ac.attack, 6)
+				local AcAttack7 = debug.getupvalue(ac.attack, 4)
+				local AcAttack10 = debug.getupvalue(ac.attack, 7)
+				local NumberAc12 = (AcAttack8 * 798405 + AcAttack7 * 727595) % AcAttack9
+				local NumberAc13 = AcAttack7 * 798405
+				(function()
+					NumberAc12 = (NumberAc12 * AcAttack9 + NumberAc13) % 1099511627776
+					AcAttack8 = math.floor(NumberAc12 / AcAttack9)
+					AcAttack7 = NumberAc12 - AcAttack8 * AcAttack9
+				end)()
+				AcAttack10 = AcAttack10 + 1
+				debug.setupvalue(ac.attack, 5, AcAttack8)
+				debug.setupvalue(ac.attack, 6, AcAttack9)
+				debug.setupvalue(ac.attack, 4, AcAttack7)
+				debug.setupvalue(ac.attack, 7, AcAttack10)
+				for k, v in pairs(ac.animator.anims.basic) do
+					v:Play(0.1,0.5,0.2,0.8)
+				end                 
+				if game.Players.LocalPlayer.Character:FindFirstChildOfClass("Tool") and ac.blades and ac.blades[1] then 
+					game:GetService("ReplicatedStorage").RigControllerEvent:FireServer("weaponChange",tostring(CurrentWeapon()))
+					game.ReplicatedStorage.Remotes.Validator:FireServer(math.floor(NumberAc12 / 1099511627776 * 16777215), AcAttack10)
+					game:GetService("ReplicatedStorage").RigControllerEvent:FireServer("hit", bladehit, 2, "") 
+				end
+			end
+		end
+	end
+end
+
+coroutine.wrap(function()
+   while task.wait(.1) do
+       local ac = CombatFrameworkR.activeController
+         if ac and ac.equipped then
+            if _G.Fast_Attack then
+                AttackFunction()
+                if _G.Fast_Attack then
+                    if tick() - cooldownfastattack > 5 then wait(.9) cooldownfastattack = tick() end
+                end
+              elseif _G.Fast_Attack == true then
+                  if ac.hitboxMagnitude ~= 55 then
+                     ac.hitboxMagnitude = 55
+                  end
+                 ac:attack()
+             end
+         end
+     end
+end)()
 
 SettingSection:AddToggle{
     Name = "Supper Fast Attack",
@@ -12043,7 +12110,7 @@ spawn(function()
 end)
 
 local PlayerTab = PepsisWorld:CreateTab({
-    Name = "Stats"
+    Name = "Player"
 })
 
 local StatsSection = PlayerTab:CreateSection({
@@ -12234,6 +12301,269 @@ StatsSection:AddSlider({
 		return "Point : " .. tostring(value)
     end
 })
+
+local PlayerStatsSection = PlayerTab:CreateSection({
+    Name = "Player Stats",
+	Side = "Right"
+})
+
+PlayerStatsSection:AddLabel({
+	Name = "Name : "..game.Players.LocalPlayer.Name,
+	Flag = ""
+})
+
+if World1 then
+	PlayerStatsSection:AddLabel({
+		Name = "World : 1",
+		Flag = ""
+	})
+elseif World2 then
+	PlayerStatsSection:AddLabel({
+		Name = "World : 2",
+		Flag = ""
+	})
+elseif World3 then
+	PlayerStatsSection:AddLabel({
+		Name = "World : 3",
+		Flag = ""
+	})
+end
+
+local Race_Player = PlayerStatsSection:AddLabel({
+	Name = "Race : "..game:GetService("Players").LocalPlayer.Data.Race.Value,
+	Flag = ""
+})
+
+spawn(function()
+	while wait() do
+		Race_Player:Set("Race : "..game:GetService("Players").LocalPlayer.Data.Race.Value)
+	end
+end)
+
+local Devil_Fruit_Player = PlayerStatsSection:AddLabel({
+	Name = "Devil Fruit : "..game.Players.LocalPlayer.Data.DevilFruit.Value,
+	Flag = ""
+})
+
+spawn(function()
+	while wait() do
+		Devil_Fruit_Player:Set("Devil Fruit : "..game.Players.LocalPlayer.Data.DevilFruit.Value)
+	end
+end)
+
+local Level_Player = PlayerStatsSection:AddLabel({
+	Name = "Level : "..game.Players.localPlayer.Data.Level.Value,
+	Flag = ""
+})
+
+spawn(function()
+	while wait() do
+		Level_Player:Set("Level : "..game.Players.localPlayer.Data.Level.Value)
+	end
+end)
+
+local Bounty_Player = PlayerStatsSection:AddLabel({
+	Name = "Bounty : "..game:GetService("Players").LocalPlayer.leaderstats["Bounty/Honor"].Value,
+	Flag = ""
+})
+
+spawn(function()
+	while wait() do
+		Bounty_Player:Set("Bounty : "..game:GetService("Players").LocalPlayer.leaderstats["Bounty/Honor"].Value)
+	end
+end)
+
+local PlayerSwordSection = PlayerTab:CreateSection({
+    Name = "Player Sword",
+	Side = "Left"
+})
+
+local Saber = PlayerSwordSection:AddLabel({
+	Name = "❌ : Saber",
+	Flag = ""
+})
+
+local Rengoku = PlayerSwordSection:AddLabel({
+	Name = "❌ : Rengoku",
+	Flag = ""
+})
+
+local Midnight_Blade = PlayerSwordSection:AddLabel({
+	Name = "❌ : Midnight Blade",
+	Flag = ""
+})
+
+local Dragon_Trident = PlayerSwordSection:AddLabel({
+	Name = "❌ : Dragon Trident",
+	Flag = ""
+})
+
+local Yama = PlayerSwordSection:AddLabel({
+	Name = "❌ : Yama",
+	Flag = ""
+})
+
+local Buddy_Sword = PlayerSwordSection:AddLabel({
+	Name = "❌ : Buddy Sword",
+	Flag = ""
+})
+
+local Canvander = PlayerSwordSection:AddLabel({
+	Name = "❌ : Canvander",
+	Flag = ""
+})
+
+local Twin_Hooks = PlayerSwordSection:AddLabel({
+	Name = "❌ : Twin Hooks",
+	Flag = ""
+})
+
+local Spikey_Trident = PlayerSwordSection:AddLabel({
+	Name = "❌ : Spikey Trident",
+	Flag = ""
+})
+
+local Hallow_Scythe = PlayerSwordSection:AddLabel({
+	Name = "❌ : Hallow Scythe",
+	Flag = ""
+})
+
+local Dark_Dagger = PlayerSwordSection:AddLabel({
+	Name = "❌ : Dark Dagger",
+	Flag = ""
+})
+
+local Tushita = PlayerSwordSection:AddLabel({
+	Name = "❌ : Tushita",
+	Flag = ""
+})
+
+local Shisui = PlayerSwordSection:AddLabel({
+	Name = "❌ : Shisui",
+	Flag = ""
+})
+
+local Saddi = PlayerSwordSection:AddLabel({
+	Name = "❌ : Saddi",
+	Flag = ""
+})
+
+local Wando = PlayerSwordSection:AddLabel({
+	Name = "❌ : Wando",
+	Flag = ""
+})
+
+local True_Triple_Katana = PlayerSwordSection:AddLabel({
+	Name = "❌ : True Triple Katana",
+	Flag = ""
+})
+
+spawn(function()
+    while task.wait() do
+        pcall(function()
+            for i,v in pairs(game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("getInventoryWeapons")) do
+                if v.Name == "Saber" or game:GetService("Players").LocalPlayer.Character:FindFirstChild("Saber") or game:GetService("Players").LocalPlayer.Backpack:FindFirstChild("Saber") then
+                    Saber:Set("✅ : Saber")
+                end
+                if v.Name == "Rengoku" or game:GetService("Players").LocalPlayer.Character:FindFirstChild("Rengoku") or game:GetService("Players").LocalPlayer.Backpack:FindFirstChild("Rengoku") then
+                    Rengoku:Set("✅ : Rengoku")
+                end
+                if v.Name == "Midnight Blade" or game:GetService("Players").LocalPlayer.Character:FindFirstChild("Midnight Blade") or game:GetService("Players").LocalPlayer.Backpack:FindFirstChild("Midnight Blade") then
+                    Midnight_Blade:Set("✅ : Midnight Blade")
+                end
+                if v.Name == "Dragon Trident" or game:GetService("Players").LocalPlayer.Character:FindFirstChild("Dragon Trident") or game:GetService("Players").LocalPlayer.Backpack:FindFirstChild("Dragon Trident") then
+                    Dragon_Trident:Set("✅ : Dragon Trident")
+                end
+                if v.Name == "Yama" or game:GetService("Players").LocalPlayer.Character:FindFirstChild("Yama") or game:GetService("Players").LocalPlayer.Backpack:FindFirstChild("Yama") then
+                    Yama:Set("✅ : Yama")
+                end
+                if v.Name == "Buddy Sword" or game:GetService("Players").LocalPlayer.Character:FindFirstChild("Buddy Sword") or game:GetService("Players").LocalPlayer.Backpack:FindFirstChild("Buddy Sword") then
+                    Buddy_Sword:Set("✅ : Buddy Sword")
+                end
+                if v.Name == "Canvander" or game:GetService("Players").LocalPlayer.Character:FindFirstChild("Canvander") or game:GetService("Players").LocalPlayer.Backpack:FindFirstChild("Canvander") then
+                    Canvander:Set("✅ : Canvander")
+                end
+                if v.Name == "Twin Hooks" or game:GetService("Players").LocalPlayer.Character:FindFirstChild("Twin Hooks") or game:GetService("Players").LocalPlayer.Backpack:FindFirstChild("Twin Hooks") then
+                    Twin_Hooks:Set("✅ : Twin Hooks")
+                end
+                if v.Name == "Spikey Trident" or game:GetService("Players").LocalPlayer.Character:FindFirstChild("Spikey Trident") or game:GetService("Players").LocalPlayer.Backpack:FindFirstChild("Spikey Trident") then
+                    Spikey_Trident:Set("✅ : Spikey Trident")
+                end
+                if v.Name == "Hallow Scythe" or game:GetService("Players").LocalPlayer.Character:FindFirstChild("Hallow Scythe") or game:GetService("Players").LocalPlayer.Backpack:FindFirstChild("Hallow Scythe") then
+                    Hallow_Scythe:Set("✅ : Hallow Scythe")
+                end
+                if v.Name == "Dark Dagger" or game:GetService("Players").LocalPlayer.Character:FindFirstChild("Dark Dagger") or game:GetService("Players").LocalPlayer.Backpack:FindFirstChild("Dark Dagger") then
+                    Dark_Dagger:Set("✅ : Dark Dagger")
+                end
+                if v.Name == "Tushita" or game:GetService("Players").LocalPlayer.Character:FindFirstChild("Tushita") or game:GetService("Players").LocalPlayer.Backpack:FindFirstChild("Tushita") then
+                    Tushita:Set("✅ : Tushita")
+                end
+				if v.Name == "Shisui" or game:GetService("Players").LocalPlayer.Character:FindFirstChild("Shisui") or game:GetService("Players").LocalPlayer.Backpack:FindFirstChild("Shisui") then
+                    Shisui:Set("✅ : Shisui")
+                end
+                if v.Name == "Saddi" or game:GetService("Players").LocalPlayer.Character:FindFirstChild("Saddi") or game:GetService("Players").LocalPlayer.Backpack:FindFirstChild("Saddi") then
+                    Saddi:Set("✅ : Saddi")
+                end
+                if v.Name == "Wando" or game:GetService("Players").LocalPlayer.Character:FindFirstChild("Wando") or game:GetService("Players").LocalPlayer.Backpack:FindFirstChild("Wando") then
+                    Wando:Set("✅ : Wando")
+                end
+                if v.Name == "True Triple Katana" or game:GetService("Players").LocalPlayer.Character:FindFirstChild("True Triple Katana") or game:GetService("Players").LocalPlayer.Backpack:FindFirstChild("True Triple Katana") then
+                    True_Triple_Katana:Set("âœ… : ✅ Triple Katana")
+                end
+            end
+        end)
+    end
+end)
+
+local PlayerFightingStyleSection = PlayerTab:CreateSection({
+    Name = "Player Fighting Style",
+	Side = "Right"
+})
+
+local Superhuman = PlayerFightingStyleSection:AddLabel({
+	Name = "❌ : Superhuman",
+	Flag = ""
+})
+
+local Death_Step = PlayerFightingStyleSection:AddLabel({
+	Name = "❌ : Death Step",
+	Flag = ""
+})
+
+local Sharkman_Karate = PlayerFightingStyleSection:AddLabel({
+	Name = "❌ : Sharkman Karate",
+	Flag = ""
+})
+
+local Electric_Claw = PlayerFightingStyleSection:AddLabel({
+	Name = "❌ : Electric Claw",
+	Flag = ""
+})
+
+local Dragon_Talon = PlayerFightingStyleSection:AddLabel({
+	Name = "❌ : Dragon Talon",
+	Flag = ""
+})
+
+spawn(function()
+    while task.wait() do
+        if game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("BuySuperhuman",true) == 1 then
+            Superhuman:Set("✅ : Superhuman")
+        end
+        if game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("BuyDeathStep",true) == 1 then
+            Death_Step:Set("✅ : Death Step")
+        end
+        if game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("BuySharkmanKarate",true) == 1 then
+            Sharkman_Karate:Set("✅ : Sharkman Karate")
+        end
+        if game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("BuyElectricClaw",true) == 1 then
+            Electric_Claw:Set("✅ : Electric Claw")
+        end
+        if game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("BuyDragonTalon",true) == 1 then
+            Dragon_Talon:Set("✅ : Dragon Talon")
+        end
+    end
+end)
 
 
 local CombatTab = PepsisWorld:CreateTab({
@@ -13845,4 +14175,4 @@ if _G.FPS_Boost then
 		end
 	})
 
-	return library, library_flags, library.subs --เอาออกพ่องตาย
+	return library, library_flags, library.subs
